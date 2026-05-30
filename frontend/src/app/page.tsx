@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import WalletButton from "@/components/WalletButton";
-import CoinAnimation from "@/components/CoinAnimation";
+import HeroCoin from "@/components/HeroCoin";
 import LiveFeed from "@/components/LiveFeed";
 import { HOUSE_EDGE, PAYOUT_MULTIPLIER } from "@/lib/contract";
 
@@ -16,7 +16,7 @@ const fade = (delay = 0) => ({
 
 export default function Landing() {
   return (
-    <main className="mx-auto max-w-6xl px-4">
+    <main className="relative mx-auto max-w-6xl overflow-hidden px-4">
       {/* Nav */}
       <nav className="flex items-center justify-between py-5">
         <div className="text-2xl font-extrabold gradient-text">Wibe</div>
@@ -29,7 +29,10 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="grid grid-cols-1 items-center gap-8 py-12 md:grid-cols-2 md:py-20">
+      <section className="relative grid grid-cols-1 items-center gap-8 py-12 md:grid-cols-2 md:py-20">
+        {/* Aurora glow behind the hero */}
+        <div className="pointer-events-none absolute right-0 top-0 -z-10 h-80 w-80 rounded-full bg-neon-violet/25 blur-3xl" />
+        <div className="pointer-events-none absolute right-10 top-24 -z-10 h-64 w-64 rounded-full bg-neon-cyan/15 blur-3xl" />
         <div>
           <motion.div {...fade(0)} className="mb-4 inline-flex items-center gap-2 rounded-full border border-neon-green/30 bg-neon-green/10 px-3 py-1 text-xs font-semibold text-neon-green">
             <span className="h-2 w-2 animate-pulse-glow rounded-full bg-neon-green" />
@@ -44,20 +47,20 @@ export default function Landing() {
             <span className="font-semibold text-neon-gold">{PAYOUT_MULTIPLIER}</span>.
           </motion.p>
           <motion.div {...fade(0.15)} className="mt-8 flex flex-wrap gap-3">
-            <Link href="/play" className="btn-primary text-lg">
+            <Link href="/play" className="btn-primary animate-breathe text-lg transition-transform duration-300 hover:scale-105">
               ▶ Play now
             </Link>
-            <a href="#fair" className="btn-ghost text-lg">
+            <a href="#fair" className="btn-ghost text-lg transition-transform duration-300 hover:scale-105">
               How fairness works
             </a>
           </motion.div>
           <motion.p {...fade(0.2)} className="mt-4 text-sm text-white/40">
-            No tokens? Hit <b>⚡ Mock Wallet</b> and play a real on-chain flip in one click.
+            No tokens? Hit <b>⚡ Instant Play</b> and play a real on-chain flip in one click.
           </motion.p>
         </div>
-        <motion.div {...fade(0.1)} className="flex justify-center">
+        <motion.div {...fade(0.1)} className="relative flex justify-center">
           <div className="rounded-3xl border border-white/10 bg-ink-800/50 p-12 shadow-glow-violet">
-            <CoinAnimation status="idle" result={0} size={220} />
+            <HeroCoin size={220} />
           </div>
         </motion.div>
       </section>
@@ -69,7 +72,11 @@ export default function Landing() {
           { t: "Settled on-chain", d: "Funds, randomness and payouts live in one audited Solidity contract.", i: "⛓️" },
           { t: "Verify every result", d: `keccak256(prevrandao, player, seed, nonce) % 2 — recompute it yourself.`, i: "🔍" },
         ].map((c, i) => (
-          <motion.div key={c.t} {...fade(i * 0.05)} className="card p-5">
+          <motion.div
+            key={c.t}
+            {...fade(i * 0.05)}
+            className="card p-5 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-neon-green/30 hover:shadow-glow"
+          >
             <div className="text-3xl">{c.i}</div>
             <div className="mt-2 font-bold">{c.t}</div>
             <div className="mt-1 text-sm text-white/50">{c.d}</div>
@@ -84,13 +91,17 @@ export default function Landing() {
         </motion.h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           {[
-            { n: 1, t: "Connect", d: "MetaMask, or the one-click Mock Wallet for an instant demo." },
+            { n: 1, t: "Connect", d: "MetaMask, or the one-click Instant Play for an instant demo." },
             { n: 2, t: "Deposit", d: "Move ETH into your in-contract game balance." },
             { n: 3, t: "Flip", d: "Choose a side and stake. The result is decided in one tx." },
             { n: 4, t: "Withdraw", d: "Cash out your balance any time. You hold the keys." },
           ].map((s, i) => (
-            <motion.div key={s.n} {...fade(i * 0.06)} className="card relative p-5">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-neon-violet/20 font-bold text-neon-violet">
+            <motion.div
+              key={s.n}
+              {...fade(i * 0.06)}
+              className="card relative p-5 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-neon-violet/40 hover:shadow-glow-violet"
+            >
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-neon-violet/40 bg-neon-violet/20 font-bold text-neon-violet shadow-[0_0_18px_-2px_rgba(123,97,255,0.8)]">
                 {s.n}
               </div>
               <div className="font-bold">{s.t}</div>
@@ -148,7 +159,11 @@ export default function Landing() {
           { k: HOUSE_EDGE, v: "house edge" },
           { k: "100%", v: "on-chain" },
         ].map((s, i) => (
-          <motion.div key={s.v} {...fade(i * 0.05)} className="card p-5 text-center">
+          <motion.div
+            key={s.v}
+            {...fade(i * 0.05)}
+            className="card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-neon-cyan/30 hover:shadow-glow-cyan"
+          >
             <div className="text-2xl font-extrabold gradient-text">{s.k}</div>
             <div className="text-xs uppercase tracking-wide text-white/40">{s.v}</div>
           </motion.div>
@@ -156,19 +171,24 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-16">
-        <motion.div {...fade()} className="card flex flex-col items-center gap-4 bg-gradient-to-br from-ink-700 to-ink-800 p-10 text-center shadow-glow-cyan">
+      <section className="relative py-16">
+        {/* Neon-green aurora behind the CTA + footer */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 mx-auto h-72 w-3/4 rounded-full bg-neon-green/15 blur-3xl" />
+        <motion.div
+          {...fade()}
+          className="card flex flex-col items-center gap-4 bg-gradient-to-br from-ink-700 to-ink-800 p-10 text-center shadow-glow-cyan transition-all duration-300 hover:shadow-glow"
+        >
           <h2 className="text-3xl font-bold">Ready to flip?</h2>
           <p className="max-w-md text-white/60">
             One click to a real on-chain coin flip — no tokens required to try the demo.
           </p>
-          <Link href="/play" className="btn-primary text-lg">
+          <Link href="/play" className="btn-primary animate-breathe text-lg transition-transform duration-300 hover:scale-105">
             ▶ Enter the casino
           </Link>
         </motion.div>
       </section>
 
-      <footer className="border-t border-white/10 py-8 text-center text-sm text-white/30">
+      <footer className="relative border-t border-white/10 py-8 text-center text-sm text-white/30">
         Wibe · on-chain coin flip · built for the hackathon · play responsibly, testnet only.
       </footer>
     </main>

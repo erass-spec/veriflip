@@ -25,7 +25,13 @@ export default function RecentGames({
     <div className="card overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <h3 className="font-bold">🕒 Recent Flips</h3>
-        <span className="text-xs text-white/40">live from on-chain events</span>
+        <span className="flex items-center gap-1.5 text-xs text-white/40">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+          </span>
+          live from on-chain events
+        </span>
       </div>
       <div className={`scroll-thin divide-y divide-white/5 overflow-y-auto ${compact ? "max-h-72" : "max-h-[28rem]"}`}>
         {games.map((g) => (

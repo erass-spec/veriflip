@@ -41,11 +41,21 @@ const config: Config = {
           "0%,100%": { opacity: "1" },
           "50%": { opacity: "0.55" },
         },
+        breathe: {
+          "0%,100%": { boxShadow: "0 0 22px -8px rgba(0,231,1,0.55)" },
+          "50%": { boxShadow: "0 0 46px -4px rgba(0,231,1,0.9)" },
+        },
+        float: {
+          "0%,100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.5s ease-out both",
         shimmer: "shimmer 2.5s linear infinite",
         "pulse-glow": "pulse-glow 1.8s ease-in-out infinite",
+        breathe: "breathe 2.6s ease-in-out infinite",
+        float: "float 3.6s ease-in-out infinite",
       },
     },
   },
