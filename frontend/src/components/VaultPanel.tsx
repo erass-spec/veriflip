@@ -1,0 +1,233 @@
+"use client";
+
+import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { parseEther } from "viem";
+import { useWallet } from "@/lib/wallet";
+import type { useGame } from "@/lib/useGame";
+import { fmtEth, friendlyError } from "@/lib/format";
+
+const PRESETS = ["0.002", "0.005", "0.01"];
+
+type Tab = "deposit" | "withdraw";
+
+function Spinner() {
+  return (
+    <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FlowBox({ icon, label, value, accent }: { icon: string; label: string; value: string; accent: "cyan" | "violet" | null }) {
+  const ring =
+    accent === "cyan"
+      ? "border-cyan-400/50 shadow-[0_0_20px_-6px_rgba(34,211,238,0.8)]"
+      : accent === "violet"
+      ? "border-violet-400/50 shadow-[0_0_20px_-6px_rgba(139,92,246,0.8)]"
+      : "border-white/10";
+  return (
+    <div className={`flex-1 rounded-xl border bg-slate-950/60 px-2 py-2.5 text-center transition-all duration-300 ${ring}`}>
+      <div className="text-lg leading-none">{icon}</div>
+      <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-white/40">{label}</div>
+      <div className="font-mono text-xs font-bold text-white/85">{value} ETH</div>
+    </div>
+  );
+}
+
+function FlowArrows({ tab }: { tab: Tab }) {
+  const deposit = tab === "deposit";
+  const glyph = deposit ? "›" : "‹";
+  const color = deposit ? "text-cyan-400" : "text-violet-400";
+  return (
+    <div className={`flex shrink-0 items-center px-1 ${color}`} aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="animate-pulse text-2xl font-bold leading-none"
+          style={{ animationDelay: `${(deposit ? i : 2 - i) * 0.18}s`, textShadow: "0 0 10px currentColor" }}
+        >
+          {glyph}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> }) {
+  const { account } = useWallet();
+  const { state, deposit, withdraw, refreshState, busy } = api;
+  const [tab, setTab] = useState<Tab>("deposit");
+  const [amount, setAmount] = useState("0.005");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const walletEth = state.gas; // native ETH in the connected wallet
+  const gameBal = state.balance; // funds inside the contract vault
+  const available = tab === "deposit" ? walletEth : gameBal;
+
+  let amtWei: bigint | null = null;
+  try {
+    if (amount && Number(amount) > 0) amtWei = parseEther(amount as `${number}`);
+  } catch {
+    amtWei = null;
+  }
+  const exceeds = amtWei !== null && amtWei > available;
+  const valid = amtWei !== null && !exceeds;
+  const locked = pending || busy; // any in-flight tx (incl. a flip) locks the vault
+
+  async function submit() {
+    setError(null);
+    if (!valid) return;
+    setPending(true);
+    try {
+      if (tab === "deposit") await deposit(amount);
+      else await withdraw(amount);
+    } catch (e) {
+      setError(friendlyError(e));
+      refreshState();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  const isDeposit = tab === "deposit";
+
+  if (!account) return null;
+
+  return (
+    <div className="card p-5 shadow-2xl transition-all duration-500 hover:border-emerald-500/10">
+      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]">
+          <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="#34d399" strokeWidth="2" />
+          <circle cx="12" cy="12" r="3.2" stroke="#34d399" strokeWidth="2" />
+          <path d="M12 12v3.5" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+        <span className="gradient-text">Your Secure Vault</span>
+      </h3>
+
+      {/* Wallet → Vault flow diagram */}
+      <div className="mb-4 flex items-center gap-1.5">
+        <FlowBox icon="🦊" label="Wallet" value={fmtEth(walletEth)} accent={isDeposit ? null : "violet"} />
+        <FlowArrows tab={tab} />
+        <FlowBox icon="🏦" label="Game Vault" value={fmtEth(gameBal)} accent={isDeposit ? "cyan" : null} />
+      </div>
+
+      {/* Plain-English explainer */}
+      <p className="mb-4 rounded-xl border border-white/10 bg-slate-950/50 p-3 text-xs leading-relaxed text-white/60">
+        <span className="font-semibold text-white/80">How the Vault works:</span> To play, deposit test ETH from your
+        connected MetaMask into the secure VeriFlip smart contract. Your funds are protected on-chain, and you can
+        withdraw your entire balance back to your wallet instantly at any time with <span className="text-emerald-400">0 fees</span>.
+      </p>
+
+      {/* Tabs */}
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        {(["deposit", "withdraw"] as Tab[]).map((t) => {
+          const active = tab === t;
+          const accent = t === "deposit" ? "cyan" : "violet";
+          return (
+            <button
+              key={t}
+              onClick={() => !locked && setTab(t)}
+              disabled={locked}
+              className={`rounded-xl border py-2 text-sm font-semibold capitalize transition-all duration-300 disabled:opacity-50 ${
+                active
+                  ? accent === "cyan"
+                    ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-300 shadow-[0_0_16px_-4px_rgba(34,211,238,0.8)]"
+                    : "border-violet-400/60 bg-violet-400/10 text-violet-300 shadow-[0_0_16px_-4px_rgba(139,92,246,0.8)]"
+                  : "border-white/10 text-white/40 hover:text-white/70"
+              }`}
+            >
+              {t}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Amount */}
+      <div className="mb-3 flex items-center gap-2">
+        <input
+          type="number"
+          step="0.001"
+          min="0"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          disabled={locked}
+          className={`w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)] ${
+            isDeposit ? "focus:border-cyan-400/60" : "focus:border-violet-400/60"
+          }`}
+        />
+        <span className="text-white/40">ETH</span>
+      </div>
+
+      {/* Presets */}
+      <div className="mb-1 flex gap-2">
+        {PRESETS.map((p) => {
+          const active = !!amount && Math.abs(Number(amount) - Number(p)) < 1e-12;
+          return (
+            <button
+              key={p}
+              onClick={() => setAmount(p)}
+              disabled={locked}
+              className={`flex-1 rounded-lg border py-1.5 font-mono text-xs transition-all duration-200 disabled:opacity-50 ${
+                active
+                  ? isDeposit
+                    ? "border-cyan-400/60 bg-cyan-400/10 text-cyan-300"
+                    : "border-violet-400/60 bg-violet-400/10 text-violet-300"
+                  : "border-white/10 text-white/60 hover:border-white/25 hover:bg-white/5"
+              }`}
+            >
+              {p}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mb-3 mt-1 text-right text-[11px] text-white/30">
+        Available: {fmtEth(available)} ETH
+        {exceeds && <span className="ml-2 font-semibold text-red-400">⚠ Exceeds available</span>}
+      </div>
+
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Action button */}
+      <button
+        onClick={submit}
+        disabled={!valid || locked}
+        className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${
+          isDeposit
+            ? "bg-cyan-500 text-ink-900 shadow-[0_0_24px_-6px_rgba(34,211,238,0.9)] hover:brightness-110"
+            : "bg-violet-500 text-white shadow-[0_0_24px_-6px_rgba(139,92,246,0.9)] hover:brightness-110"
+        } ${pending ? (isDeposit ? "animate-breathe-cyan" : "animate-breathe-violet") : ""}`}
+      >
+        {pending ? (
+          <>
+            <Spinner />
+            {isDeposit ? "Securing transaction on-chain…" : "Withdrawing to MetaMask…"}
+          </>
+        ) : isDeposit ? (
+          "Deposit to Vault"
+        ) : (
+          "Withdraw to Wallet"
+        )}
+      </button>
+
+      {/* Decentralized network footnote */}
+      <p className="mt-3 text-center text-[10px] leading-relaxed text-white/30">
+        Note: Transactions on Sepolia are processed by decentralized validators. Network gas fees go to Ethereum
+        miners, not VeriFlip.
+      </p>
+    </div>
+  );
+}

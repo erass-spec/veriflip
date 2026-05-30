@@ -57,15 +57,13 @@ export default function GamePanel({
   onSettled: (g: GameRow) => void;
 }) {
   const { account, network, mode } = useWallet();
-  const { state, deposit, withdraw, flip, refreshState } = api;
+  const { state, flip, refreshState, busy } = api;
   const [choice, setChoice] = useState<Side>(0);
   const [amount, setAmount] = useState("");
   const [coin, setCoin] = useState<"idle" | "spinning" | "settled">("idle");
   const [last, setLast] = useState<GameRow | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<null | "flip" | "deposit" | "withdraw">(null);
-  const [banking, setBanking] = useState<"deposit" | "withdraw">("deposit");
-  const [bankAmt, setBankAmt] = useState("");
+  const [pending, setPending] = useState<null | "flip">(null);
 
   const noContract = !network?.address || network.address === ("0x" as string);
 
@@ -83,8 +81,6 @@ export default function GamePanel({
     if (maxEth <= 0) return;
     const a = Number(amount);
     if (!(a >= minEth && a <= maxEth)) setAmount(trim(maxEth * 0.5)); // snap bet into range
-    const b = Number(bankAmt);
-    if (!(b > 0) || b > maxEth * 5) setBankAmt(trim(maxEth * 2)); // gentle, affordable deposit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minEth, maxEth]);
 
@@ -102,11 +98,14 @@ export default function GamePanel({
   const aboveMax = betWei !== null && state.maxBet > 0n && betWei > state.maxBet;
   // Burner-only: native ETH too low to pay gas for another flip.
   const lowGas = mode === "mock" && state.gas > 0n && state.gas < LOW_GAS_WEI;
-  const canFlip = !pending && !invalidAmount && !insufficientBalance && !belowMin && !aboveMax && !lowGas;
+  // `busy` covers any in-flight tx from the hook (incl. a vault deposit/withdraw), so the
+  // flip can't fire while the Vault has a pending transaction (avoids burner nonce clashes).
+  const canFlip = !pending && !busy && !invalidAmount && !insufficientBalance && !belowMin && !aboveMax && !lowGas;
+  const locked = !!pending || busy; // any in-flight tx locks the whole card's controls
 
   // "Max" = the largest in-range bet you can afford: min(balance, maxBet).
   const maxAffordableWei = state.balance < state.maxBet ? state.balance : state.maxBet;
-  const canMax = !pending && maxAffordableWei >= state.minBet && maxAffordableWei > 0n;
+  const canMax = !locked && maxAffordableWei >= state.minBet && maxAffordableWei > 0n;
   const setMax = () => setAmount(formatEther(maxAffordableWei));
 
   const chainName = (network?.label || "chain").replace(" (Hardhat)", "");
@@ -114,7 +113,7 @@ export default function GamePanel({
   // Selecting a side mirrors the coin to that face. After a settled flip, picking a side
   // clears the result so the coin tactilely rotates to the newly chosen face.
   function selectSide(s: Side) {
-    if (pending) return;
+    if (locked) return;
     setChoice(s);
     if (coin === "settled") {
       setLast(null);
@@ -139,22 +138,6 @@ export default function GamePanel({
       setCoin("idle");
       setError(friendlyError(e));
       // Re-sync on failure so a stale balance/nonce can't cause a repeat-revert loop.
-      refreshState();
-    } finally {
-      setPending(null);
-    }
-  }
-
-  async function onBank() {
-    setError(null);
-    if (!bankAmt || Number(bankAmt) <= 0) return setError("Enter an amount.");
-    setPending(banking);
-    try {
-      if (banking === "deposit") await deposit(bankAmt);
-      else await withdraw(bankAmt);
-    } catch (e) {
-      console.error("[wibe] bank tx failed —", (e as any)?.shortMessage || (e as any)?.message, e);
-      setError(friendlyError(e));
       refreshState();
     } finally {
       setPending(null);
@@ -244,7 +227,7 @@ export default function GamePanel({
             <button
               key={s}
               onClick={() => selectSide(s)}
-              disabled={!!pending}
+              disabled={locked}
               className={`rounded-xl border-2 py-3 font-bold transition-all duration-300 disabled:opacity-50 ${
                 selected
                   ? heads
@@ -269,7 +252,7 @@ export default function GamePanel({
             min="0"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            disabled={!!pending}
+            disabled={locked}
             className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition focus:border-emerald-400/60 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.15)]"
           />
           <button
@@ -291,7 +274,7 @@ export default function GamePanel({
               <button
                 key={q}
                 onClick={() => setAmount(q)}
-                disabled={!!pending}
+                disabled={locked}
                 className={`flex flex-1 flex-col items-center rounded-lg border py-1.5 transition-all duration-200 disabled:opacity-50 ${
                   active
                     ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300 shadow-[0_0_12px_-3px_rgba(52,211,153,0.75)]"
@@ -369,37 +352,6 @@ export default function GamePanel({
           `Flip for ${amount || "0"} ETH`
         )}
       </button>
-
-      {/* Banking */}
-      <div className="mt-5 border-t border-white/10 pt-4">
-        <div className="mb-2 flex gap-2 text-sm">
-          {(["deposit", "withdraw"] as const).map((b) => (
-            <button
-              key={b}
-              onClick={() => setBanking(b)}
-              className={`flex-1 rounded-lg py-1.5 font-semibold capitalize ${
-                banking === b ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              {b}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            step="0.1"
-            min="0"
-            value={bankAmt}
-            onChange={(e) => setBankAmt(e.target.value)}
-            disabled={!!pending}
-            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 font-mono outline-none transition focus:border-emerald-400/60 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.15)]"
-          />
-          <button onClick={onBank} disabled={!!pending} className="btn-ghost whitespace-nowrap capitalize">
-            {pending === banking ? "…" : banking}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

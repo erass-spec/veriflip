@@ -5,6 +5,7 @@ import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
 import Navbar from "@/components/Navbar";
 import GamePanel from "@/components/GamePanel";
+import VaultPanel from "@/components/VaultPanel";
 import VerifyPanel from "@/components/VerifyPanel";
 import RecentGames from "@/components/RecentGames";
 import Footer from "@/components/Footer";
@@ -35,6 +36,7 @@ export default function PlayPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-6">
           <GamePanel api={api} onSettled={(g) => setSelected(g)} />
+          <VaultPanel api={api} />
           {selected && <VerifyPanel game={selected} />}
         </div>
         <div className="space-y-6">
