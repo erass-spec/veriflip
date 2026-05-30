@@ -4,6 +4,7 @@ import { useWallet } from "@/lib/wallet";
 import { useGame } from "@/lib/useGame";
 import Navbar from "@/components/Navbar";
 import VaultPanel from "@/components/VaultPanel";
+import OnboardingConsole from "@/components/OnboardingConsole";
 import Footer from "@/components/Footer";
 
 export default function VaultPage() {
@@ -24,16 +25,10 @@ export default function VaultPage() {
           {account ? (
             <VaultPanel api={api} />
           ) : (
-            <div className="card flex flex-col items-center gap-3 p-10 text-center shadow-2xl">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]">
-                <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="#34d399" strokeWidth="2" />
-                <circle cx="12" cy="12" r="3.4" stroke="#34d399" strokeWidth="2" />
-                <path d="M12 12v3.6" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <h1 className="text-xl font-bold gradient-text">Your Secure Vault</h1>
-              <p className="text-sm text-white/60">Connect a wallet to access your on-chain cashier.</p>
-              <p className="text-xs text-white/40">Use ⚡ Instant Play in the top bar to connect in one click.</p>
-            </div>
+            <OnboardingConsole
+              title="Welcome to Your Secure Vault"
+              subtitle="To manage your on-chain deposits, wins, and withdrawals, please select a connection method below:"
+            />
           )}
         </div>
       </section>

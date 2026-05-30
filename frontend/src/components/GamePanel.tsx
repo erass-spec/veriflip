@@ -9,6 +9,7 @@ import { useGame, type GameRow } from "@/lib/useGame";
 import { fmtEth, friendlyError } from "@/lib/format";
 import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
 import CoinAnimation from "./CoinAnimation";
+import OnboardingConsole from "./OnboardingConsole";
 
 // Below this native-ETH balance the burner can't reliably cover another tx's gas.
 const LOW_GAS_WEI = parseEther("0.0015");
@@ -147,11 +148,10 @@ export default function GamePanel({
 
   if (!account) {
     return (
-      <div className="card flex flex-col items-center justify-center gap-3 p-10 text-center">
-        <CoinAnimation status="idle" result={0} size={120} />
-        <p className="text-white/60">Connect a wallet to start flipping.</p>
-        <p className="text-sm text-white/40">Tip: use ⚡ Instant Play for an instant on-chain demo.</p>
-      </div>
+      <OnboardingConsole
+        title="Welcome to the VeriFlip Console"
+        subtitle="To begin your on-chain provably fair gaming session, please select a connection method below:"
+      />
     );
   }
 
