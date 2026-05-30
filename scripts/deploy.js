@@ -51,6 +51,10 @@ async function main() {
     path.join(deploymentsDir, `${net}.json`),
     JSON.stringify(meta, null, 2)
   );
+  // Spec alias: local networks also persist to deployments/local.json
+  if (isLocal) {
+    fs.writeFileSync(path.join(deploymentsDir, "local.json"), JSON.stringify(meta, null, 2));
+  }
 
   // 2) frontend/src/contracts/{CoinFlip.json (abi), deployment-<network>.json}
   const feDir = path.join(__dirname, "..", "frontend", "src", "contracts");

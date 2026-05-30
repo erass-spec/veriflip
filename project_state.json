@@ -1,7 +1,7 @@
 {
   "project": "Wibe — On-Chain Coin Flip Casino",
-  "current_phase": "PHASE I — Local Development & Verification",
-  "current_step": "Step 3 — Local Deploy & ABI Export",
+  "current_phase": "PHASE II — Remote Deployment (awaiting user gate)",
+  "current_step": "Step 6 — Sepolia key generation (BLOCKED on user confirmation)",
   "game": "Coin Flip (50/50, 3.5% house edge, win pays 1.93x)",
   "randomness": "single-tx block.prevrandao + player seed + per-player nonce; recomputable on-chain; validator-influence limit documented in security_review.md",
   "completed_tasks": [
@@ -11,19 +11,26 @@
     "verified Hardhat toolchain compiles + tests on Node 25 (viaIR enabled for 10-field event)",
     "wrote CoinFlip contract (Ownable + ReentrancyGuard + liquidity guard)",
     "wrote unit tests: 16 passing, 97% stmts / 81% branch / 98% lines coverage",
-    "provable-fairness verified: off-chain recompute matches contract for both win+loss"
+    "provable-fairness verified: off-chain recompute matches contract for both win+loss",
+    "local node deploy + ABI auto-export to frontend + deployments/local.json",
+    "frontend: Next.js landing + casino workspace (viem, framer-motion, Tailwind)",
+    "Mock Wallet Mode (burner vs local node) — real on-chain txs, zero MetaMask",
+    "frontend production build passes clean (no TS/lint errors)",
+    "E2E verified in browser: Connect->Deposit->Flip(WON+0.0465)->Verify(VERIFIED)->Withdraw",
+    "mobile 390px responsive verified"
   ],
   "pending_tasks": [
-    "local node deploy + ABI export",
-    "frontend landing + game UI",
-    "mock wallet mode",
-    "sepolia deploy scaffolding",
-    "public frontend deploy",
-    "security review",
-    "judge scoring sim",
-    "submission docs"
+    "USER GATE: confirm Sepolia key-gen + public deploy",
+    "sepolia deploy (after funding)",
+    "public frontend deploy (Vercel)",
+    "security review doc",
+    "judge scoring sim doc",
+    "notion_submission / ai_usage / loom_script docs"
   ],
-  "blockers": [],
+  "blockers": [
+    "Sepolia deploy needs a funded deployer key — gated on user confirmation",
+    "Public frontend deploy needs Vercel/Netlify credentials"
+  ],
   "gates": [
     "PAUSE for user confirmation before real key generation and public deployment"
   ],
@@ -39,8 +46,18 @@
       "coverage": { "statements": "97.06%", "branch": "80.95%", "lines": "98.08%", "functions": "90.91%" }
     }
   },
-  "frontend": {},
+  "frontend": {
+    "framework": "Next.js 15.1.6 (App Router)",
+    "stack": "viem 2, framer-motion 11, TailwindCSS 3.4 (TypeScript)",
+    "routes": ["/ (landing)", "/play (casino)"],
+    "build": "passing — / 242kB, /play 244kB First Load JS",
+    "mock_wallet": "Hardhat Account #1 burner against local node",
+    "build_first_load_kb": 244
+  },
   "qa": {
-    "toolchain": "verified on Node 25.6.1 (Hardhat warns but works; viaIR pipeline)"
+    "toolchain": "verified on Node 25.6.1 (Hardhat warns but works; viaIR pipeline)",
+    "e2e_loop": "PASS — deposit 0.5, flip won +0.0465, recompute VERIFIED, withdraw 0.5",
+    "console_errors": "none",
+    "mobile_390px": "PASS"
   }
 }
