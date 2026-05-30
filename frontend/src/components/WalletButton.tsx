@@ -52,7 +52,7 @@ export default function WalletButton() {
             }}
             className="flex w-full flex-col items-start gap-0.5 border-b border-white/5 px-4 py-3 text-left hover:bg-white/5"
           >
-            <span className="font-semibold text-neon-cyan">⚡ Instant Play (no wallet)</span>
+            <span className="font-semibold text-neon-cyan">⚡ Instant Play (DEMO)</span>
             <span className="text-xs text-white/50">
               Burner account · {INSTANT_SUBLABEL}. Real on-chain txs, zero setup.
             </span>

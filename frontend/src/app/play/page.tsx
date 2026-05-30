@@ -57,8 +57,7 @@ export default function PlayPage() {
                 </dd>
               </dl>
               <p className="mt-3 text-xs leading-relaxed text-white/40">
-                Pick a row in <b className="text-white/60">Recent Flips</b> to re-verify any past outcome.{" "}
-                <span className="animate-blink font-mono text-emerald-400">_</span>
+                Pick a row in <b className="text-white/60">Recent Flips</b> to re-verify any past outcome.
               </p>
             </div>
           )}

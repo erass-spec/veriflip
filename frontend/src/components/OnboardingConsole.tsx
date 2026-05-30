@@ -35,7 +35,7 @@ export default function OnboardingConsole({ title, subtitle }: { title: string; 
             disabled={connecting}
             className="btn-primary w-full animate-breathe text-base transition-transform duration-300 hover:scale-[1.03] disabled:opacity-60"
           >
-            ⚡ Instant Play (Demo)
+            ⚡ Instant Play (DEMO)
           </button>
           {/* Secondary — standard MetaMask connection */}
           <button
