@@ -8,7 +8,7 @@ The differentiator isn't the game — it's that the casino *proves it isn't chea
 ## Links
 - **Live demo:** https://frontend-evg-s-projects.vercel.app — public, playable, on-chain
 - **Contract (Sepolia):** [`0x38097F553ce38747835b429d8674F6861E994955`](https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955) — deployed, funded (0.02 ETH bankroll), full loop verified on-chain
-- **GitHub:** _<repo URL>_
+- **GitHub:** https://github.com/erass-spec/veriflip
 - **Loom:** _<video URL>_
 
 ## Architecture

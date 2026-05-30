@@ -8,6 +8,7 @@ A dark-themed, mobile-first crypto casino built around a single, honest idea: **
 |---|---|
 | **Live demo** | **[frontend-evg-s-projects.vercel.app](https://frontend-evg-s-projects.vercel.app)** — public, playable, on-chain |
 | **Contract (Sepolia)** | [`0x38097F553ce38747835b429d8674F6861E994955`](https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955) — live, funded, verified E2E |
+| **GitHub** | [github.com/erass-spec/veriflip](https://github.com/erass-spec/veriflip) |
 | **Game** | Coin Flip — 50/50, 3.5% house edge, winners paid 1.93x |
 | **Stack** | Solidity 0.8.24 · OpenZeppelin · Hardhat · Next.js · Wagmi/Viem · Tailwind |
 

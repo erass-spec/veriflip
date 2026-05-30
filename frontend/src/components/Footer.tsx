@@ -3,8 +3,8 @@ import BrandLogo from "./BrandLogo";
 import { SEPOLIA_NETWORK } from "@/lib/contract";
 
 const ENGINE_VERSION = "v1.2.0-Production";
-// Public repo for the audit/source. Update to the real URL once the repo is published.
-const GITHUB_URL = "https://github.com";
+// Public repo — security review + full source.
+const GITHUB_URL = "https://github.com/erass-spec/veriflip";
 
 const contractUrl =
   SEPOLIA_NETWORK.address && SEPOLIA_NETWORK.explorer
