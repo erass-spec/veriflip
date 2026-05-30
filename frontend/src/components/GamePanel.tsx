@@ -92,7 +92,7 @@ export default function GamePanel({
       <div className="card flex flex-col items-center justify-center gap-3 p-10 text-center">
         <CoinAnimation status="idle" result={0} size={120} />
         <p className="text-white/60">Connect a wallet to start flipping.</p>
-        <p className="text-sm text-white/40">Tip: use ⚡ Mock Wallet for an instant on-chain demo.</p>
+        <p className="text-sm text-white/40">Tip: use ⚡ Instant Play for an instant on-chain demo.</p>
       </div>
     );
   }

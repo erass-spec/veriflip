@@ -70,9 +70,11 @@
   },
   "qa": {
     "toolchain": "verified on Node 25.6.1 (Hardhat warns but works; viaIR pipeline)",
-    "e2e_loop": "PASS — deposit 0.5, flip won +0.0465, recompute VERIFIED, withdraw 0.5",
+    "e2e_loop": "PASS — deposit, flip (win +0.0465 and loss paths), recompute VERIFIED, withdraw",
     "console_errors": "none",
-    "mobile_390px": "PASS"
+    "mobile_390px": "PASS",
+    "controls": "driven by on-chain min/max bet — Sepolia-safe (no BetOutOfRange on defaults)",
+    "sepolia_path": "PREPARED, not yet executed — re-run browser E2E after funded deploy"
   },
   "sepolia_burner_address": "0xd989CAef0B5b45C4dA1924712fa3Bc8aD3d7426A"
 }
