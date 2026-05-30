@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { formatEther, parseEther } from "viem";
 import { AnimatePresence, motion } from "framer-motion";
 import { useWallet } from "@/lib/wallet";
@@ -352,6 +353,15 @@ export default function GamePanel({
           `Flip for ${amount || "0"} ETH`
         )}
       </button>
+
+      {(insufficientBalance || state.balance === 0n) && (
+        <Link
+          href="/vault"
+          className="mt-3 block text-center text-xs text-cyan-400 transition hover:text-cyan-300 hover:underline"
+        >
+          Need test ETH? Open your Vault to deposit →
+        </Link>
+      )}
     </div>
   );
 }

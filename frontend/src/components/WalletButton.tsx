@@ -23,10 +23,12 @@ export default function WalletButton() {
         </span>
         <div className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 font-mono text-sm backdrop-blur">
           {isOwner && <span className="mr-1 text-neon-gold">👑</span>}
-          {shortAddr(account)}
+          <span className="hidden sm:inline">{shortAddr(account)}</span>
+          <span className="sm:hidden">…{account.slice(-4)}</span>
         </div>
-        <button onClick={disconnect} className="btn-ghost px-3 py-2 text-sm">
-          Disconnect
+        <button onClick={disconnect} title="Disconnect" className="btn-ghost px-3 py-2 text-sm">
+          <span className="hidden sm:inline">Disconnect</span>
+          <span className="sm:hidden">✕</span>
         </button>
       </div>
     );
@@ -35,11 +37,11 @@ export default function WalletButton() {
   return (
     <div className="relative">
       <button
-        className="btn-primary"
+        className="btn-primary whitespace-nowrap px-4"
         disabled={connecting}
         onClick={() => setOpen((o) => !o)}
       >
-        {connecting ? "Connecting…" : "Connect Wallet"}
+        {connecting ? "Connecting…" : <><span className="sm:hidden">Connect</span><span className="hidden sm:inline">Connect Wallet</span></>}
       </button>
       {open && (
         <div className="absolute right-0 z-30 mt-2 w-72 overflow-hidden rounded-2xl border border-white/10 bg-ink-800 shadow-2xl">

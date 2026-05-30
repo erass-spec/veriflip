@@ -9,16 +9,36 @@
 
 | # | Finding | Severity | Status |
 |---|---------|----------|--------|
-| 1 | `block.prevrandao` randomness is proposer-influenceable | **High** (prod) / Accepted (testnet) | Documented, mitigation path defined |
-| 2 | Owner can withdraw the entire house bankroll | **Medium** | By design; cannot touch player balances (invariant proven) |
-| 3 | Testnet burner private key ships in the client bundle | **Low** | Intentional, testnet-only, low `maxBet` |
-| 4 | Payout rounding favors the house on odd-wei bets | **Low / Info** | Acceptable; direction is safe |
-| 5 | Shared burner nonce collisions under concurrent demo play | **Low** | Demo-only UX caveat |
-| Reentrancy, insolvency, frontrunning | — | Mitigated | See below |
+| 1 | Same-transaction conditional-revert exploit (atomic `flip()`) | **Critical** (prod) / Accepted (testnet) | Documented; mitigation defined, not patched on live demo |
+| 2 | `block.prevrandao` randomness is proposer-influenceable | **High** (prod) / Accepted (testnet) | Documented, mitigation path defined |
+| 3 | Owner can withdraw the entire house bankroll | **Medium** | By design; cannot touch player balances (invariant proven) |
+| 4 | Testnet burner private key ships in the client bundle | **Low** | Intentional, testnet-only, low `maxBet` |
+| 5 | Payout rounding favors the house on odd-wei bets | **Low / Info** | Acceptable; direction is safe |
+| 6 | Shared burner nonce collisions under concurrent demo play | **Low** | Demo-only UX caveat |
+| Reentrancy, insolvency | — | Mitigated | See below |
 
 ---
 
-## 1. Randomness is verifiable, not manipulation-proof — **High (production)**
+## 1. Same-transaction conditional-revert exploit — **Critical (production)**
+
+Because `flip()` is `external`, settles atomically in one transaction, and returns `(bool won, uint256 payout)`, **any player (not just a validator) can guarantee a win** by calling it from a wrapper contract and reverting the whole transaction on a loss:
+
+```solidity
+function attack() external {
+    (bool won, ) = casino.flip(Side.Heads, seed, betAmount);
+    require(won); // on a loss, revert -> the bet deduction is rolled back, nothing is lost
+}
+```
+
+A reverted transaction undoes the in-`flip` balance deduction, so the attacker only ever *realizes* wins and drains the house bankroll for the price of gas. This is the canonical break of **any** same-transaction `prevrandao`/`blockhash` game, and it is **more accessible and more severe than the validator-withholding risk (#2)** — it needs no privileged position, just a contract caller.
+
+- **Why accepted here:** testnet only, no real value, and the demo's thesis is *transparency/recomputability* — which still holds (the outcome is honestly derived and recomputable). It does **not** hold up as a real-money casino.
+- **Mitigation (future work, NOT applied to the live demo):**
+  - `require(msg.sender == tx.origin)` blocks contract wrappers (cheap; caveat: also blocks smart-contract / account-abstraction wallets), **or**
+  - move to a **two-transaction commit–reveal or Chainlink VRF** flow so the result is not known within the calling transaction (also fixes #2). VRF is the production-grade fix for both findings at once.
+- **Not patched now by design:** the contract is live, funded, verified, and wired into the frontend. Redeploying to patch a *documented testnet limitation* this close to submission would force a re-fund + re-wire + full re-test — exactly the high-risk, late-stage churn we've deliberately avoided. The honest-limitations writeup is the correct response for a hackathon testnet build.
+
+## 2. Randomness is verifiable, not manipulation-proof — **High (production)**
 
 The outcome is `uint256(keccak256(abi.encodePacked(block.prevrandao, player, seed, nonce))) % 2`.
 
@@ -57,7 +77,7 @@ If multiple visitors use Instant Play simultaneously, they share one burner acco
 
 - **Reentrancy:** `withdraw`, `flip`, `withdrawHouse` are `nonReentrant` and follow checks-effects-interactions — balances/bankroll are updated *before* any `.call{value:}`. The only external calls are ETH transfers to `msg.sender`/`owner`.
 - **Insolvency / can't-pay-winner:** the liquidity guard in `flip()` rejects any bet whose max profit the bankroll can't cover, so a winner is always payable.
-- **Frontrunning / pre-computation:** a normal player cannot precompute their result, because `prevrandao` for the block their tx lands in is not known at submission time (it's set by that block's proposer). The outcome also binds to `msg.sender` + per-player `nonce`, so it can't be replayed or cherry-picked by reordering.
+- **Pre-computation / replay:** a player cannot *predict* their result at submission time, because `prevrandao` for the block their tx lands in is set by that block's proposer, and the outcome binds to `msg.sender` + per-player `nonce` (so a settled result can't be replayed). **Caveat:** this does NOT mean the outcome can't be *cherry-picked* — it can be, within the same transaction, via the conditional-revert exploit in finding #1. We call that out explicitly rather than claiming false immunity.
 - **Overflow:** Solidity 0.8.24 checked arithmetic; the one `unchecked` block only increments counters that cannot realistically overflow.
 - **Failed-transfer griefing:** a contract recipient that reverts on receive only blocks *its own* withdrawal, not others'.
 

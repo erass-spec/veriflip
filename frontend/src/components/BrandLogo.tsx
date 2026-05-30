@@ -51,7 +51,7 @@ export default function BrandLogo({ size = 32, showWordmark = true }: { size?: n
         </motion.svg>
       </div>
       {showWordmark && (
-        <span className="text-2xl font-extrabold tracking-tight gradient-text">VeriFlip</span>
+        <span className="hidden text-2xl font-extrabold tracking-tight gradient-text sm:inline">VeriFlip</span>
       )}
     </div>
   );
