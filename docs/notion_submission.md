@@ -1,7 +1,7 @@
-# Wibe — On-Chain Provably-Recomputable Coin Flip
+# VeriFlip — On-Chain Provably-Recomputable Coin Flip
 
 ## Project Summary
-Wibe is a dark-themed, mobile-first crypto casino built around one honest idea: **you can recompute the outcome of every coin flip yourself, directly from public on-chain data.** Connect → deposit → flip (50/50, win pays 1.93x) → withdraw. Every result is derived in a single transaction from `keccak256(block.prevrandao, player, seed, nonce) % 2` and emitted in one rich event that powers both the live games feed and an interactive verification panel.
+VeriFlip is a dark-themed, mobile-first crypto casino built around one honest idea: **you can recompute the outcome of every coin flip yourself, directly from public on-chain data.** Connect → deposit → flip (50/50, win pays 1.93x) → withdraw. Every result is derived in a single transaction from `keccak256(block.prevrandao, player, seed, nonce) % 2` and emitted in one rich event that powers both the live games feed and an interactive verification panel.
 
 The differentiator isn't the game — it's that the casino *proves it isn't cheating* and is honest about exactly how far that proof goes.
 

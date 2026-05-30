@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import WalletButton from "@/components/WalletButton";
 import HeroCoin from "@/components/HeroCoin";
 import LiveFeed from "@/components/LiveFeed";
+import BrandLogo from "@/components/BrandLogo";
 import { HOUSE_EDGE, PAYOUT_MULTIPLIER } from "@/lib/contract";
 
 const fade = (delay = 0) => ({
@@ -18,8 +19,8 @@ export default function Landing() {
   return (
     <main className="relative mx-auto max-w-6xl overflow-hidden px-4">
       {/* Nav */}
-      <nav className="flex items-center justify-between py-5">
-        <div className="text-2xl font-extrabold gradient-text">Wibe</div>
+      <nav className="relative z-20 flex items-center justify-between py-5">
+        <Link href="/"><BrandLogo /></Link>
         <div className="flex items-center gap-3">
           <Link href="/play" className="hidden text-sm text-white/60 hover:text-white sm:block">
             Play
@@ -30,9 +31,11 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative grid grid-cols-1 items-center gap-8 py-12 md:grid-cols-2 md:py-20">
+        {/* Cyberpunk perspective mesh */}
+        <div className="perspective-grid pointer-events-none absolute -inset-x-8 -top-24 -z-20 h-[140%]" />
         {/* Aurora glow behind the hero */}
-        <div className="pointer-events-none absolute right-0 top-0 -z-10 h-80 w-80 rounded-full bg-neon-violet/25 blur-3xl" />
-        <div className="pointer-events-none absolute right-10 top-24 -z-10 h-64 w-64 rounded-full bg-neon-cyan/15 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-0 -z-10 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute right-10 top-24 -z-10 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
         <div>
           <motion.div {...fade(0)} className="mb-4 inline-flex items-center gap-2 rounded-full border border-neon-green/30 bg-neon-green/10 px-3 py-1 text-xs font-semibold text-neon-green">
             <span className="h-2 w-2 animate-pulse-glow rounded-full bg-neon-green" />
@@ -53,6 +56,17 @@ export default function Landing() {
             <a href="#fair" className="btn-ghost text-lg transition-transform duration-300 hover:scale-105">
               How fairness works
             </a>
+          </motion.div>
+          <motion.div
+            {...fade(0.18)}
+            className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/[0.06] px-3.5 py-1.5 text-xs font-medium text-emerald-200/90 shadow-[0_0_26px_-8px_rgba(52,211,153,0.7)]"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_4px_rgba(52,211,153,0.9)]">
+              <rect x="4" y="10.5" width="16" height="10" rx="2.5" stroke="#34d399" strokeWidth="2" />
+              <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="15.5" r="1.6" fill="#34d399" />
+            </svg>
+            Secured by OpenZeppelin · Verifiable on-chain
           </motion.div>
           <motion.p {...fade(0.2)} className="mt-4 text-sm text-white/40">
             No tokens? Hit <b>⚡ Instant Play</b> and play a real on-chain flip in one click.
@@ -75,7 +89,7 @@ export default function Landing() {
           <motion.div
             key={c.t}
             {...fade(i * 0.05)}
-            className="card p-5 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-neon-green/30 hover:shadow-glow"
+            className="card p-5 transition-all duration-500 hover:-translate-y-1 hover:scale-[1.02] hover:border-emerald-500/30 hover:shadow-glow"
           >
             <div className="text-3xl">{c.i}</div>
             <div className="mt-2 font-bold">{c.t}</div>
@@ -86,7 +100,7 @@ export default function Landing() {
 
       {/* How it works */}
       <section className="py-16">
-        <motion.h2 {...fade()} className="mb-8 text-center text-3xl font-bold">
+        <motion.h2 {...fade()} className="mb-8 text-center text-3xl font-bold gradient-text">
           How it works
         </motion.h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -99,9 +113,9 @@ export default function Landing() {
             <motion.div
               key={s.n}
               {...fade(i * 0.06)}
-              className="card relative p-5 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-neon-violet/40 hover:shadow-glow-violet"
+              className="card relative p-5 transition-all duration-500 hover:-translate-y-1 hover:scale-[1.02] hover:border-emerald-500/30 hover:shadow-glow"
             >
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-neon-violet/40 bg-neon-violet/20 font-bold text-neon-violet shadow-[0_0_18px_-2px_rgba(123,97,255,0.8)]">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#5eead4,#0891b2)] font-extrabold text-ink-900 animate-badge-pulse">
                 {s.n}
               </div>
               <div className="font-bold">{s.t}</div>
@@ -115,9 +129,9 @@ export default function Landing() {
       <section id="fair" className="py-16">
         <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
           <motion.div {...fade()}>
-            <h2 className="text-3xl font-bold">Provably fair, not “trust me”</h2>
+            <h2 className="text-3xl font-bold gradient-text">Provably fair, not “trust me”</h2>
             <p className="mt-4 text-white/60">
-              Most casinos ask you to trust a black box. Wibe derives every flip from data that’s
+              Most casinos ask you to trust a black box. VeriFlip derives every flip from data that’s
               already public on the blockchain:
             </p>
             <pre className="mt-4 overflow-x-auto rounded-xl border border-white/10 bg-ink-900/70 p-4 font-mono text-sm text-neon-cyan">
@@ -135,14 +149,14 @@ export default function Landing() {
             </p>
             <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-sm text-amber-200/80">
               <b>Honest note:</b> randomness uses <span className="font-mono">block.prevrandao</span>, which a
-              block proposer can influence. That makes Wibe <b>verifiable &amp; recomputable</b>, not
+              block proposer can influence. That makes VeriFlip <b>verifiable &amp; recomputable</b>, not
               manipulation-proof. Production would use Chainlink VRF or commit–reveal.
             </p>
           </motion.div>
-          <motion.div {...fade(0.1)} className="card p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="font-bold">Live games</span>
-              <Link href="/play" className="text-sm text-neon-cyan hover:underline">
+          <motion.div {...fade(0.1)}>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="font-bold gradient-text">Live games</span>
+              <Link href="/play" className="text-sm text-cyan-400 hover:underline">
                 Open casino ↗
               </Link>
             </div>
@@ -178,7 +192,7 @@ export default function Landing() {
           {...fade()}
           className="card flex flex-col items-center gap-4 bg-gradient-to-br from-ink-700 to-ink-800 p-10 text-center shadow-glow-cyan transition-all duration-300 hover:shadow-glow"
         >
-          <h2 className="text-3xl font-bold">Ready to flip?</h2>
+          <h2 className="text-3xl font-bold gradient-text">Ready to flip?</h2>
           <p className="max-w-md text-white/60">
             One click to a real on-chain coin flip — no tokens required to try the demo.
           </p>
@@ -189,7 +203,7 @@ export default function Landing() {
       </section>
 
       <footer className="relative border-t border-white/10 py-8 text-center text-sm text-white/30">
-        Wibe · on-chain coin flip · built for the hackathon · play responsibly, testnet only.
+        VeriFlip · on-chain coin flip · built for the hackathon · play responsibly, testnet only.
       </footer>
     </main>
   );

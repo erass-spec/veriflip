@@ -49,6 +49,10 @@ const config: Config = {
           "0%,100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
         },
+        "badge-pulse": {
+          "0%,100%": { boxShadow: "0 0 0 0 rgba(52,211,153,0.45), inset 0 0 12px rgba(52,211,153,0.35)" },
+          "50%": { boxShadow: "0 0 0 6px rgba(52,211,153,0), inset 0 0 18px rgba(34,211,238,0.5)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.5s ease-out both",
@@ -56,6 +60,7 @@ const config: Config = {
         "pulse-glow": "pulse-glow 1.8s ease-in-out infinite",
         breathe: "breathe 2.6s ease-in-out infinite",
         float: "float 3.6s ease-in-out infinite",
+        "badge-pulse": "badge-pulse 2.4s ease-in-out infinite",
       },
     },
   },

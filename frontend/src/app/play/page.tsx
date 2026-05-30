@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
 import WalletButton from "@/components/WalletButton";
+import BrandLogo from "@/components/BrandLogo";
 import GamePanel from "@/components/GamePanel";
 import VerifyPanel from "@/components/VerifyPanel";
 import RecentGames from "@/components/RecentGames";
@@ -22,8 +23,8 @@ export default function PlayPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
       <header className="mb-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 text-xl font-extrabold">
-          <span className="gradient-text">Wibe</span>
+        <Link href="/" className="flex items-center gap-2">
+          <BrandLogo />
           <span className="text-white/30">/ play</span>
         </Link>
         <WalletButton />

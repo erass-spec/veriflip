@@ -1,4 +1,4 @@
-# 🪙 Wibe — On-Chain Provably-Recomputable Coin Flip
+# 🪙 VeriFlip — On-Chain Provably-Recomputable Coin Flip
 
 A dark-themed, mobile-first crypto casino built around a single, honest idea: **you can recompute the outcome of every flip yourself, straight from on-chain data.** No trust required — just keccak256.
 

@@ -3,7 +3,7 @@ import "./globals.css";
 import { WalletProvider } from "@/lib/wallet";
 
 export const metadata: Metadata = {
-  title: "Wibe — Provably-Recomputable Coin Flip Casino",
+  title: "VeriFlip — Provably-Recomputable Coin Flip Casino",
   description:
     "Connect, deposit, flip. Every outcome is derived on-chain and you can recompute it yourself from public data. 50/50, 1.93x, fully verifiable.",
 };

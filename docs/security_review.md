@@ -1,4 +1,4 @@
-# Security Review — Wibe CoinFlip
+# Security Review — VeriFlip CoinFlip
 
 **Scope:** `contracts/CoinFlip.sol` (Solidity 0.8.24, OpenZeppelin Ownable + ReentrancyGuard) and the public-demo deployment model.
 **Posture:** This is a hackathon/testnet build. It is engineered to be *honest* about its limits rather than to overstate them. Findings are rated Critical / High / Medium / Low / Info.
