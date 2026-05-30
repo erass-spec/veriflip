@@ -56,6 +56,19 @@ npx vercel --prod \
 
 Accept the prompts (it auto-detects Next.js; **Root Directory = current dir**). Or via the **dashboard**: import the repo, set **Root Directory = `frontend`**, add the two `NEXT_PUBLIC_*` env vars (copy from `frontend/.env.local`), deploy. `vercel.json` is already there.
 
+## Step 4.5 — ⚠️ Make it PUBLIC (disable Deployment Protection)
+By default Vercel gates new deployments behind a **"Log in to Vercel"** wall (Deployment Protection / Vercel Authentication). Judges visiting the URL would hit that login screen instead of the casino. Turn it off:
+
+**Dashboard:** Vercel → your project (`frontend`) → **Settings → Deployment Protection** → set **Vercel Authentication** to **Disabled** (or "Only Preview Deployments") for **Production** → Save.
+
+**Or CLI:**
+```bash
+cd frontend
+npx vercel project ls                 # confirm project name
+# In the dashboard toggle is fastest; CLI: manage via `vercel` Settings UI.
+```
+After disabling, reload the URL in an incognito window — you should see the Wibe landing page, not a Vercel login.
+
 ## Step 5 — Verify
 - Open the Vercel URL → **Play → ⚡ Instant Play** → deposit a tiny amount → flip → confirm the verify panel shows **✓ VERIFIED** and the Etherscan link resolves.
 - Update the live links in `README.md` and `docs/notion_submission.md`.
