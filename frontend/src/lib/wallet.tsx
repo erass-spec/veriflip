@@ -6,6 +6,7 @@ import {
   createWalletClient,
   custom,
   http,
+  type Account,
   type PublicClient,
   type WalletClient,
 } from "viem";
@@ -23,6 +24,9 @@ interface WalletState {
   mode: WalletMode | null;
   network: NetworkConfig | null;
   account: `0x${string}` | null;
+  // What writeContract should sign with: a local Account object (mock burner — signs
+  // locally via eth_sendRawTransaction) or the address (injected — MetaMask signs).
+  txAccount: Account | `0x${string}` | null;
   publicClient: PublicClient | null;
   walletClient: WalletClient | null;
   connecting: boolean;
@@ -43,6 +47,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<WalletMode | null>(null);
   const [network, setNetwork] = useState<NetworkConfig | null>(null);
   const [account, setAccount] = useState<`0x${string}` | null>(null);
+  const [txAccount, setTxAccount] = useState<Account | `0x${string}` | null>(null);
   const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
   const [walletClient, setWalletClient] = useState<WalletClient | null>(null);
   const [connecting, setConnecting] = useState(false);
@@ -52,6 +57,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setMode(null);
     setNetwork(null);
     setAccount(null);
+    setTxAccount(null);
     setPublicClient(null);
     setWalletClient(null);
     setError(null);
@@ -70,6 +76,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setMode("mock");
       setNetwork(net);
       setAccount(acct.address);
+      setTxAccount(acct); // local account -> viem signs locally (works on any RPC)
       setPublicClient(pub as PublicClient);
       setWalletClient(wallet);
     } catch {
@@ -110,6 +117,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setMode("injected");
       setNetwork(net);
       setAccount(accounts[0] as `0x${string}`);
+      setTxAccount(accounts[0] as `0x${string}`); // address -> MetaMask signs via custom transport
       setPublicClient(pub as PublicClient);
       setWalletClient(wallet);
     } catch (e: any) {
@@ -126,6 +134,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       mode,
       network,
       account,
+      txAccount,
       publicClient,
       walletClient,
       connecting,
@@ -136,7 +145,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       disconnect,
       clearError: () => setError(null),
     }),
-    [mode, network, account, publicClient, walletClient, connecting, error, connectMock, connectInjected, disconnect]
+    [mode, network, account, txAccount, publicClient, walletClient, connecting, error, connectMock, connectInjected, disconnect]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

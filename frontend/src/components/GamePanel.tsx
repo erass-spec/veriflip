@@ -66,6 +66,7 @@ export default function GamePanel({
       setCoin("settled");
       onSettled(row);
     } catch (e) {
+      console.error("[wibe] flip error:", (e as any)?.shortMessage || (e as any)?.details || e);
       setCoin("idle");
       setError(friendlyError(e));
     } finally {
@@ -81,6 +82,7 @@ export default function GamePanel({
       if (banking === "deposit") await deposit(bankAmt);
       else await withdraw(bankAmt);
     } catch (e) {
+      console.error("[wibe] bank tx error:", (e as any)?.shortMessage || e);
       setError(friendlyError(e));
     } finally {
       setPending(null);

@@ -1,7 +1,9 @@
 {
   "project": "Wibe — On-Chain Coin Flip Casino",
-  "current_phase": "PHASE II — Remote Deployment (awaiting user gate)",
-  "current_step": "Steps 7-13 prepped; BLOCKED on user funding deployer for Sepolia broadcast",
+  "current_phase": "PHASE II complete — live on Sepolia; only public frontend host remains",
+  "current_step": "Step 8 — frontend deploy: user runs `vercel --prod` (auth required); commands in DEPLOY.md",
+  "sepolia_contract_address": "0x4Dc741EB5D5e7491C50013228157f6427F59fd4b",
+  "sepolia_explorer": "https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b",
   "game": "Coin Flip (50/50, 3.5% house edge, win pays 1.93x)",
   "randomness": "single-tx block.prevrandao + player seed + per-player nonce; recomputable on-chain; validator-influence limit documented in security_review.md",
   "completed_tasks": [
@@ -20,10 +22,9 @@
     "mobile 390px responsive verified"
   ],
   "pending_tasks": [
-    "USER ACTION: fund deployer 0x3bd06a28375b6c0E81564eDe001697F9B47E62A4 (~0.1 Sepolia ETH)",
-    "then: bash scripts/deploy-sepolia.sh",
-    "then: set NEXT_PUBLIC_SEPOLIA_ADDRESS + frontend build + vercel --prod",
-    "update live links in README + notion_submission"
+    "USER ACTION: run `vercel --prod` from frontend/ (needs your Vercel auth) — see DEPLOY.md",
+    "after deploy: paste live URL into README + notion_submission",
+    "record 5-min Loom (script in docs/loom_script.md)"
   ],
   "completed_docs": [
     "security_review.md (5 findings, honest ratings)",
@@ -34,8 +35,7 @@
     "DEPLOY.md + deploy-sepolia.sh + vercel.json"
   ],
   "blockers": [
-    "Sepolia broadcast needs the deployer funded (only the user can faucet) — everything else is ready",
-    "Vercel deploy needs user auth (commands generated in DEPLOY.md)"
+    "Public frontend deploy needs the user's Vercel auth (exact commands in DEPLOY.md); contract is already live"
   ],
   "gates": [
     "PAUSE for user confirmation before real key generation and public deployment"
@@ -74,7 +74,13 @@
     "console_errors": "none",
     "mobile_390px": "PASS",
     "controls": "driven by on-chain min/max bet — Sepolia-safe (no BetOutOfRange on defaults)",
-    "sepolia_path": "PREPARED, not yet executed — re-run browser E2E after funded deploy"
+    "sepolia_path": "VERIFIED on live Sepolia — browser E2E (connect burner, deposit, flip WON, VERIFIED panel, feed, withdraw) + contract-level e2e script all pass",
+    "sepolia_bugs_fixed": [
+      "config nonce race -> explicit sequential nonces (configure-sepolia.js)",
+      "viem signed via eth_sendTransaction (unknown account) -> pass local Account obj as txAccount",
+      "feed empty -> getLogs span bounded to 45000 (publicnode caps at 50000)",
+      "transient nonce lag after deposit -> single auto-retry on write"
+    ]
   },
   "sepolia_burner_address": "0xd989CAef0B5b45C4dA1924712fa3Bc8aD3d7426A"
 }

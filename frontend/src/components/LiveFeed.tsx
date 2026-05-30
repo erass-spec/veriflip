@@ -20,7 +20,8 @@ export default function LiveFeed() {
       try {
         const client = createPublicClient({ chain: NET.chain, transport: http(NET.rpcUrl) });
         const latest = await client.getBlockNumber();
-        const span = NET === SEPOLIA_NETWORK ? 9000n : latest;
+        // publicnode caps getLogs at 50000 blocks; local chain is short, scan all.
+        const span = NET === SEPOLIA_NETWORK ? 45000n : latest;
         const fromBlock = latest > span ? latest - span : 0n;
         const logs = await client.getContractEvents({
           address: NET.address,

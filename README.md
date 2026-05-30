@@ -6,8 +6,8 @@ A dark-themed, mobile-first crypto casino built around a single, honest idea: **
 
 | | |
 |---|---|
-| **Live demo** | _added after deploy (Phase II)_ |
-| **Contract (Sepolia)** | _added after deploy (Phase II)_ |
+| **Live demo** | _set after `vercel --prod` (see DEPLOY.md)_ |
+| **Contract (Sepolia)** | [`0x4Dc741EB5D5e7491C50013228157f6427F59fd4b`](https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b) — live, funded, verified E2E |
 | **Game** | Coin Flip — 50/50, 3.5% house edge, winners paid 1.93x |
 | **Stack** | Solidity 0.8.24 · OpenZeppelin · Hardhat · Next.js · Wagmi/Viem · Tailwind |
 

@@ -36,8 +36,23 @@ function randomSeed(): `0x${string}` {
   return toHex(bytes) as `0x${string}`;
 }
 
+// Public RPCs load-balance and can briefly report a stale nonce right after a tx
+// confirms. Retry once on transient send errors so the demo doesn't need a re-click.
+async function sendOnce<T>(build: () => Promise<T>): Promise<T> {
+  try {
+    return await build();
+  } catch (e: any) {
+    const m = `${e?.shortMessage || e?.details || e?.message || ""}`.toLowerCase();
+    if (/nonce|replacement|already known|timeout|fetch|temporar/.test(m)) {
+      await new Promise((r) => setTimeout(r, 2500));
+      return await build();
+    }
+    throw e;
+  }
+}
+
 export function useGame() {
-  const { publicClient, walletClient, account, network, mode } = useWallet();
+  const { publicClient, walletClient, account, txAccount, network } = useWallet();
   const [state, setState] = useState<ChainState>(EMPTY);
   const [games, setGames] = useState<GameRow[]>([]);
   const [busy, setBusy] = useState(false);
@@ -65,8 +80,10 @@ export function useGame() {
     if (!publicClient || !address) return;
     try {
       const latest = await publicClient.getBlockNumber();
-      // Local chains are short; bound the window on public RPCs.
-      const span = mode === "mock" ? latest : 9000n;
+      // Local chains are short (scan from genesis); public RPCs cap getLogs ranges
+      // (publicnode = 50000 blocks), so bound the window on anything non-local.
+      const isLocalChain = publicClient.chain?.id === 31337;
+      const span = isLocalChain ? latest : 45000n;
       const fromBlock = latest > span ? latest - span : 0n;
       const logs = await publicClient.getContractEvents({
         address,
@@ -94,7 +111,7 @@ export function useGame() {
     } catch {
       /* ignore — feed is best-effort */
     }
-  }, [publicClient, address, mode]);
+  }, [publicClient, address]);
 
   useEffect(() => {
     if (ready) {
@@ -108,14 +125,16 @@ export function useGame() {
       if (!walletClient || !address || !account || !network) throw new Error("not connected");
       setBusy(true);
       try {
-        const hash = await walletClient.writeContract({
-          address,
-          abi: coinFlipAbi,
-          functionName: "deposit",
-          value: parseEther(eth),
-          account,
-          chain: network.chain,
-        });
+        const hash = await sendOnce(() =>
+          walletClient.writeContract({
+            address,
+            abi: coinFlipAbi,
+            functionName: "deposit",
+            value: parseEther(eth),
+            account: txAccount!,
+            chain: network.chain,
+          })
+        );
         await publicClient!.waitForTransactionReceipt({ hash });
         await refreshState();
         return hash;
@@ -123,7 +142,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, network, refreshState]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState]
   );
 
   const withdraw = useCallback(
@@ -131,14 +150,16 @@ export function useGame() {
       if (!walletClient || !address || !account || !network) throw new Error("not connected");
       setBusy(true);
       try {
-        const hash = await walletClient.writeContract({
-          address,
-          abi: coinFlipAbi,
-          functionName: "withdraw",
-          args: [parseEther(eth)],
-          account,
-          chain: network.chain,
-        });
+        const hash = await sendOnce(() =>
+          walletClient.writeContract({
+            address,
+            abi: coinFlipAbi,
+            functionName: "withdraw",
+            args: [parseEther(eth)],
+            account: txAccount!,
+            chain: network.chain,
+          })
+        );
         await publicClient!.waitForTransactionReceipt({ hash });
         await refreshState();
         return hash;
@@ -146,7 +167,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, network, refreshState]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState]
   );
 
   /** Place a flip. Returns the settled game row parsed from the BetSettled event. */
@@ -157,14 +178,16 @@ export function useGame() {
       setBusy(true);
       try {
         const seed = randomSeed();
-        const hash = await walletClient.writeContract({
-          address,
-          abi: coinFlipAbi,
-          functionName: "flip",
-          args: [choice, seed, parseEther(eth)],
-          account,
-          chain: network.chain,
-        });
+        const hash = await sendOnce(() =>
+          walletClient.writeContract({
+            address,
+            abi: coinFlipAbi,
+            functionName: "flip",
+            args: [choice, seed, parseEther(eth)],
+            account: txAccount!,
+            chain: network.chain,
+          })
+        );
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
         const decoded = await publicClient.getContractEvents({
           address,
@@ -195,7 +218,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, network, refreshState, refreshGames]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames]
   );
 
   return { state, games, busy, ready, refreshState, refreshGames, deposit, withdraw, flip };
