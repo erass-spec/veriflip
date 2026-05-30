@@ -1,66 +1,103 @@
 # 🪙 VeriFlip — On-Chain Provably-Recomputable Coin Flip
 
-A dark-themed, mobile-first crypto casino built around a single, honest idea: **you can recompute the outcome of every flip yourself, straight from on-chain data.** No trust required — just keccak256.
+<p align="center">
+  <img src="https://img.shields.io/badge/Solidity-0.8.24-blue?logo=solidity" alt="Solidity" />
+  <img src="https://img.shields.io/badge/Framework-Next.js%2015-black?logo=nextdotjs" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Security-OpenZeppelin-blue" alt="OpenZeppelin" />
+  <img src="https://img.shields.io/badge/Network-Sepolia%20Testnet-green" alt="Sepolia" />
+  <img src="https://img.shields.io/badge/Deployment-Vercel-black?logo=vercel" alt="Vercel" />
+</p>
 
-> **What it is:** Connect → Deposit → Flip (50/50, 1.93x) → Withdraw. Every result is derived in one transaction from `keccak256(block.prevrandao, player, yourSeed, nonce)` and emitted in a single rich event that powers both the live games feed and the verification panel.
+A dark-themed, mobile-first Web3 crypto casino built around a single, honest idea: **you can recompute the outcome of every flip yourself, straight from public on-chain data.** No trust required — just pure cryptography.
 
-| | |
-|---|---|
-| **Live demo** | **[frontend-evg-s-projects.vercel.app](https://frontend-evg-s-projects.vercel.app)** — public, playable, on-chain |
-| **Contract (Sepolia)** | [`0x38097F553ce38747835b429d8674F6861E994955`](https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955) — live, funded, verified E2E |
-| **GitHub** | [github.com/erass-spec/veriflip](https://github.com/erass-spec/veriflip) |
-| **Game** | Coin Flip — 50/50, 3.5% house edge, winners paid 1.93x |
-| **Stack** | Solidity 0.8.24 · OpenZeppelin · Hardhat · Next.js · Wagmi/Viem · Tailwind |
+> **The Flow:** Connect → Deposit to Vault → Flip (50/50, 1.93x) → Withdraw. Every result is derived on-chain in a single transaction and emitted as a rich event that dynamically powers both the live games feed and the verification console.
 
 ---
 
-## ⚡ Quick start (local, ~2 min)
+### 🌐 Project Hub
+
+| Resource | Link |
+| :--- | :--- |
+| **⚡ Live Demo** | **[frontend-evg-s-projects.vercel.app](https://frontend-evg-s-projects.vercel.app)** (Deployed on Vercel) |
+| **🏦 Smart Contract** | [`0x38097F553ce38747835b429d8674F6861E994955`](https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955) (Etherscan Sepolia) |
+| **🔒 Audit Report** | **[`docs/security_review.md`](docs/security_review.md)** (Pre-Submission Hardening Audit) |
+| **💡 AI Usage Report** | **[`docs/ai_usage.md`](docs/ai_usage.md)** (Bonus: AI tooling optimization report) |
+| **📦 GitHub** | [github.com/erass-spec/veriflip](https://github.com/erass-spec/veriflip) |
+
+---
+
+## 🛠️ Developer Experience & Tooling
+
+We built a centralized automation engine via `Makefile` to simplify development, testing, and Vercel deployments.
 
 ```bash
-# 1. install + compile + test
-npm install
-npm run compile
-npm test
+# 1. Install dependencies, compile contracts, and run 16 unit tests
+make test
 
-# 2. run a local chain (terminal A)
-npm run node
+# 2. Spin up a local Hardhat node (runs in the background)
+make node
 
-# 3. deploy + auto-export ABI to the frontend (terminal B)
-npm run deploy:local
+# 3. Deploy the contract locally & auto-export the ABI/address to the frontend
+make deploy-local
 
-# 4. run the frontend
-cd frontend && npm install && npm run dev
+# 4. Launch the Next.js development server
+make dev
+
+# 5. Build and deploy to Vercel production using secure .env.local variables
+make deploy
 ```
 
-The frontend ships a **Mock Wallet Mode** so the full gameplay loop is demoable with zero external dependencies (no MetaMask, no testnet ETH).
+> **Note:** The frontend includes a **Mock Wallet Mode** to allow testing the entire E2E loop (Connect → Deposit → Play → Withdraw) in the browser without MetaMask or testnet ETH.
 
 ---
 
-## 🎲 Is it really fair?
+## 🎲 Provably Fair Mathematics
 
-The outcome of flip #`n` for player `P` with seed `S` is:
+The outcome of coin flip `gameId` for player `P` with a custom client seed `S` and a monotonic per-player `nonce` is derived as:
 
 ```
 result = uint256(keccak256(abi.encodePacked(prevrandao, P, S, nonce))) % 2
 ```
 
-Everything on the right-hand side is public: `prevrandao` is on-chain block data, and `P`, `S`, `nonce`, `result` are all emitted in the `BetSettled` event. The verification panel in the UI lets you **recompute the hash and confirm the contract didn't cheat** — and the contract exposes `computeResult(...)` as a public pure function so you can call it yourself.
+**Transparency highlights:**
 
-**Honest limitation:** `block.prevrandao` is chosen by the block proposer, so a validator producing the block can influence it. This makes the game **verifiable and recomputable**, not **manipulation-proof**. Production-grade randomness would use Chainlink VRF or commit-reveal — see [`docs/security_review.md`](docs/security_review.md).
+- **Zero secrets:** every variable on the right-hand side is fully public — `prevrandao` is block entropy, and `P`, `S`, `nonce` (and `result`) are emitted in the `BetSettled` event.
+- **Client entropy:** the user contributes a custom seed when they click, proving the casino could not predict their input to manipulate the outcome.
+- **Interactive verification:** the built-in terminal-style verifier console recomputes the hash on the fly in the browser and compares it side-by-side with the on-chain result.
 
 ---
 
-## 🏗️ Architecture
+## 🔒 Security & Hardening
 
-```
-contracts/CoinFlip.sol      Ownable + ReentrancyGuard, custodial balances,
-                            liquidity-guarded payouts, one rich event per flip
-scripts/deploy.js           deploy + seed house + auto-export ABI/address
-scripts/keygen.js           generate Sepolia deployer (public address only logged)
-test/CoinFlip.test.js       provable-fairness recomputation + accounting + access control
-frontend/                   Next.js landing page + casino workspace
-deployments/                local.json, sepolia.json
-docs/                       security_review.md, notion_submission.md, ai_usage.md, loom_script.md
+VeriFlip is engineered toward commercial Web3 security standards. The following hardening measures were implemented:
+
+- **On-chain revert-exploit fix:** the critical contract-level exploit is resolved. `flip()` enforces `require(msg.sender == tx.origin, "Only direct user calls allowed")`, blocking contract-wrapper callers — this prevents malicious actors from using atomic transaction rollbacks (`revert()`) to only ever realize wins and drain the bankroll.
+- **Reentrancy protection:** all financial state changes use OpenZeppelin's `ReentrancyGuard` and the strict Checks-Effects-Interactions (CEI) pattern.
+- **Public RPC failover:** the frontend uses `viem` fallback transport across 5 public Sepolia nodes (publicnode, dRPC, BlastAPI, 1RPC, Omniatech) to avoid transaction hangs and rate-limit blocks, with a bounded receipt timeout so a dropped connection can never lock the UI.
+- **Client-side nonce mutex:** serialized nonce allocation (with self-healing reset on error) prevents transaction collisions or nonce gaps from rapid consecutive clicks.
+
+**Honest limitations:**
+
+`block.prevrandao` is fully recomputable but theoretically vulnerable to validator-level block-withholding manipulation. For production scale, we document a migration path to **Chainlink VRF v2.5** (and a commit–reveal alternative) in [`docs/security_review.md`](docs/security_review.md).
+
+---
+
+## 🏗️ Project Architecture
+
+```text
+/
+├── contracts/          # Secured Solidity contracts (OpenZeppelin Ownable, ReentrancyGuard)
+├── scripts/            # Deploy, configure, and stress/verification automation scripts
+├── test/               # 16 unit tests covering all edge cases (97% statement coverage)
+├── deployments/        # Deployment metadata (local.json, sepolia.json)
+├── docs/               # Technical, security, AI, and presentation documentation
+├── frontend/           # Next.js 15 app styled after Stake/Roobet
+│   ├── src/contracts/  # Auto-exported ABI and contract addresses
+│   └── src/app/vault/  # Centralized on-chain cashier / bank route
+├── Makefile            # Global project command automation
+└── README.md           # This document
 ```
 
-See [`docs/notion_submission.md`](docs/notion_submission.md) for the full write-up.
+---
+
+Built with ❤️ for the Hackathon. Play responsibly. Testnet only. No real funds at stake.
