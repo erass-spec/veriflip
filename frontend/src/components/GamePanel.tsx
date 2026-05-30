@@ -47,7 +47,7 @@ export default function GamePanel({
     const a = Number(amount);
     if (!(a >= minEth && a <= maxEth)) setAmount(trim(maxEth * 0.5)); // snap bet into range
     const b = Number(bankAmt);
-    if (!(b > 0) || b > maxEth * 5) setBankAmt(trim(maxEth * 3)); // affordable deposit
+    if (!(b > 0) || b > maxEth * 5) setBankAmt(trim(maxEth * 2)); // gentle, affordable deposit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minEth, maxEth]);
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { parseEther, toHex } from "viem";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { parseEther, parseEventLogs, toHex } from "viem";
 import { useWallet } from "./wallet";
 import { coinFlipAbi, type Side } from "./contract";
 
@@ -59,6 +59,26 @@ export function useGame() {
 
   const address = network?.address;
   const ready = !!publicClient && !!address && address !== "0x";
+
+  // For the mock burner we control the account, so we track the nonce client-side.
+  // Load-balanced public RPCs lag reporting the pending nonce right after a tx, which
+  // made flip-immediately-after-deposit occasionally fail. Tracking it ourselves (and
+  // taking max with the chain's view) keeps writes strictly monotonic. For injected
+  // wallets we return undefined and let MetaMask manage its own nonce.
+  const nonceRef = useRef<number | null>(null);
+  const isLocalAccount = !!txAccount && typeof txAccount === "object";
+
+  useEffect(() => {
+    nonceRef.current = null; // resync on (re)connect / account change
+  }, [account]);
+
+  const nextNonce = useCallback(async (): Promise<number | undefined> => {
+    if (!isLocalAccount || !publicClient || !account) return undefined;
+    const chainNonce = await publicClient.getTransactionCount({ address: account, blockTag: "pending" });
+    const n = nonceRef.current === null ? chainNonce : Math.max(nonceRef.current, chainNonce);
+    nonceRef.current = n + 1;
+    return n;
+  }, [isLocalAccount, publicClient, account]);
 
   const refreshState = useCallback(async () => {
     if (!publicClient || !address || !account) return;
@@ -125,6 +145,7 @@ export function useGame() {
       if (!walletClient || !address || !account || !network) throw new Error("not connected");
       setBusy(true);
       try {
+        const nonce = await nextNonce();
         const hash = await sendOnce(() =>
           walletClient.writeContract({
             address,
@@ -133,6 +154,7 @@ export function useGame() {
             value: parseEther(eth),
             account: txAccount!,
             chain: network.chain,
+            nonce,
           })
         );
         await publicClient!.waitForTransactionReceipt({ hash });
@@ -142,7 +164,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce]
   );
 
   const withdraw = useCallback(
@@ -150,6 +172,7 @@ export function useGame() {
       if (!walletClient || !address || !account || !network) throw new Error("not connected");
       setBusy(true);
       try {
+        const nonce = await nextNonce();
         const hash = await sendOnce(() =>
           walletClient.writeContract({
             address,
@@ -158,6 +181,7 @@ export function useGame() {
             args: [parseEther(eth)],
             account: txAccount!,
             chain: network.chain,
+            nonce,
           })
         );
         await publicClient!.waitForTransactionReceipt({ hash });
@@ -167,7 +191,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce]
   );
 
   /** Place a flip. Returns the settled game row parsed from the BetSettled event. */
@@ -178,6 +202,7 @@ export function useGame() {
       setBusy(true);
       try {
         const seed = randomSeed();
+        const nonce = await nextNonce();
         const hash = await sendOnce(() =>
           walletClient.writeContract({
             address,
@@ -186,16 +211,16 @@ export function useGame() {
             args: [choice, seed, parseEther(eth)],
             account: txAccount!,
             chain: network.chain,
+            nonce,
           })
         );
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
-        const decoded = await publicClient.getContractEvents({
-          address,
-          abi: coinFlipAbi,
-          eventName: "BetSettled",
-          blockHash: receipt.blockHash,
-        });
-        const mine = decoded.find((d: any) => d.transactionHash === hash) as any;
+        if (receipt.status === "reverted") throw new Error("flip transaction reverted on-chain");
+        // Parse the BetSettled event straight from the receipt's own logs — no extra
+        // RPC round-trip and no reliance on getLogs-by-blockHash (unsupported on some
+        // public RPCs, which previously caused "settlement event not found").
+        const events = parseEventLogs({ abi: coinFlipAbi, eventName: "BetSettled", logs: receipt.logs });
+        const mine = (events.find((e: any) => e.transactionHash === hash) || events[0]) as any;
         if (!mine) throw new Error("settlement event not found");
         const row: GameRow = {
           gameId: mine.args.gameId,
@@ -218,7 +243,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, nextNonce]
   );
 
   return { state, games, busy, ready, refreshState, refreshGames, deposit, withdraw, flip };

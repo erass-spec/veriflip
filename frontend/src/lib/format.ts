@@ -34,7 +34,8 @@ export function friendlyError(err: unknown): string {
     return "The house bankroll can't cover this bet right now. Try a smaller amount.";
   if (m.includes("betoutofrange")) return "That bet is outside the allowed min/max range.";
   if (m.includes("zeroamount")) return "Amount must be greater than zero.";
-  if (m.includes("insufficient funds")) return "Your wallet doesn't have enough ETH for gas.";
+  if (m.includes("insufficient funds") || m.includes("exceeds the balance") || m.includes("total cost"))
+    return "The demo wallet is low on test ETH for gas. Try a smaller amount, or it'll be topped up shortly.";
   if (m.includes("chain") && m.includes("match")) return "Wrong network — please switch your wallet's network.";
   if (m.includes("fetch") || m.includes("network") || m.includes("timeout") || m.includes("econnrefused"))
     return "Network hiccup reaching the blockchain. Check your connection and retry.";

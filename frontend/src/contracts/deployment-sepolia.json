@@ -5,7 +5,7 @@
   "deployer": "0x3bd06a28375b6c0E81564eDe001697F9B47E62A4",
   "minBet": "0.0002",
   "maxBet": "0.002",
-  "houseFunded": "0.02",
-  "blockNumber": 10953936,
-  "deployedAt": "2026-05-30T11:31:26.113Z"
+  "houseFunded": "0.02207",
+  "blockNumber": 10954088,
+  "deployedAt": "2026-05-30T12:01:48.692Z"
 }
