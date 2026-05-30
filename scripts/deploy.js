@@ -44,18 +44,23 @@ async function main() {
   const address = await coinflip.getAddress();
   console.log(`[deploy] CoinFlip deployed at ${address}`);
 
+  // Public RPCs (load-balanced) lag reporting the pending nonce right after the deploy tx,
+  // which previously broke setBetLimits with "nonce too low". Manage the nonce explicitly
+  // from "latest" so the post-deploy txs are reliable.
+  let nonce = await ethers.provider.getTransactionCount(deployer.address, "latest");
+
   // Bet limits — small on testnet so a modest bankroll covers many flips.
   const minBet = ethers.parseEther(process.env.MIN_BET_ETH || (isLocal ? "0.001" : "0.0002"));
   const maxBet = ethers.parseEther(process.env.MAX_BET_ETH || (isLocal ? "1" : "0.002"));
-  await (await coinflip.setBetLimits(minBet, maxBet)).wait();
+  await (await coinflip.setBetLimits(minBet, maxBet, { nonce: nonce++ })).wait();
   console.log(`[deploy] bet limits set: ${ethers.formatEther(minBet)} – ${ethers.formatEther(maxBet)} ETH`);
 
   // Seed the house bankroll.
   const houseFund = ethers.parseEther(process.env.HOUSE_FUND_ETH || (isLocal ? "100" : "0.02"));
-  await (await coinflip.fundHouse({ value: houseFund })).wait();
+  await (await coinflip.fundHouse({ value: houseFund, nonce: nonce++ })).wait();
   console.log(`[deploy] house bankroll funded: ${ethers.formatEther(houseFund)} ETH`);
 
-  // On public testnets, fund the Instant-Play burner so a visitor can play with no wallet.
+  // On public testnets, fund the Instant-Play burner only if it can't already cover gas.
   if (!isLocal) {
     const burnerKey = readEnvVar(
       path.join(__dirname, "..", "frontend", ".env.local"),
@@ -64,8 +69,13 @@ async function main() {
     if (burnerKey) {
       const burnerAddr = new ethers.Wallet(burnerKey).address;
       const burnerFund = ethers.parseEther(process.env.BURNER_FUND_ETH || "0.012");
-      await (await deployer.sendTransaction({ to: burnerAddr, value: burnerFund })).wait();
-      console.log(`[deploy] funded Instant-Play burner ${burnerAddr} with ${ethers.formatEther(burnerFund)} ETH`);
+      const burnerBal = await ethers.provider.getBalance(burnerAddr);
+      if (burnerBal < burnerFund) {
+        await (await deployer.sendTransaction({ to: burnerAddr, value: burnerFund - burnerBal, nonce: nonce++ })).wait();
+        console.log(`[deploy] topped up Instant-Play burner ${burnerAddr} to ${ethers.formatEther(burnerFund)} ETH`);
+      } else {
+        console.log(`[deploy] burner ${burnerAddr} already funded (${ethers.formatEther(burnerBal)} ETH) — skip`);
+      }
     } else {
       console.log("[deploy] NOTE: no burner key in frontend/.env.local — run `npm run keygen` for Instant Play.");
     }

@@ -7,7 +7,7 @@ The differentiator isn't the game — it's that the casino *proves it isn't chea
 
 ## Links
 - **Live demo:** https://frontend-evg-s-projects.vercel.app — public, playable, on-chain
-- **Contract (Sepolia):** [`0x4Dc741EB5D5e7491C50013228157f6427F59fd4b`](https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b) — deployed, funded (0.02 ETH bankroll), full loop verified on-chain
+- **Contract (Sepolia):** [`0x38097F553ce38747835b429d8674F6861E994955`](https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955) — deployed, funded (0.02 ETH bankroll), full loop verified on-chain
 - **GitHub:** _<repo URL>_
 - **Loom:** _<video URL>_
 
@@ -24,6 +24,7 @@ The whole premise — *publicly verifiable randomness inputs and outcomes* — o
 - The full loop **Connect → Deposit → Flip → Verify → Withdraw** verified in a real browser against a live chain (won +0.0465 ETH on a 0.05 bet; exact accounting; in-browser recompute showed **✓ VERIFIED**).
 - Production frontend build passes clean; mobile 390px responsive; no console errors.
 - One-click Instant Play (network-aware burner) so the demo needs no wallet setup.
+- **Critical same-transaction revert exploit fully mitigated on-chain** — `flip()` enforces `require(msg.sender == tx.origin)`, blocking contract-wrapper attacks that could otherwise drain the bankroll. Redeployed to the secured address and re-verified end-to-end; all 16 tests pass with the guard. See `docs/security_review.md` finding #1.
 
 ## Limitations (honest)
 - **Randomness:** `block.prevrandao` is proposer-influenceable — *verifiable & recomputable*, not *manipulation-proof*. Production would use Chainlink VRF or commit–reveal. (`docs/security_review.md`.)

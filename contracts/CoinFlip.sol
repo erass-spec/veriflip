@@ -124,6 +124,10 @@ contract CoinFlip is Ownable, ReentrancyGuard {
         nonReentrant
         returns (bool won, uint256 payout)
     {
+        // Block contract-wrapper callers. A wrapper could call flip() and revert the whole
+        // transaction whenever it loses (rolling back the bet) to only ever realize wins and
+        // drain the bankroll. Requiring a direct EOA call (tx.origin == msg.sender) defeats it.
+        require(msg.sender == tx.origin, "Only direct user calls allowed");
         if (betAmount < minBet || betAmount > maxBet) {
             revert BetOutOfRange(betAmount, minBet, maxBet);
         }

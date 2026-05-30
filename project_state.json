@@ -5,8 +5,8 @@
   "completion": "100% — contract live+verified on Sepolia; frontend public on Vercel; deposit/flip/VERIFIED/withdraw all confirmed on the live public URL with zero console errors",
   "live_url": "https://frontend-evg-s-projects.vercel.app",
   "live_url_status": "PUBLIC + verified working — Instant Play resolves to Sepolia, full loop confirmed on the deployed site",
-  "sepolia_contract_address": "0x4Dc741EB5D5e7491C50013228157f6427F59fd4b",
-  "sepolia_explorer": "https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b",
+  "sepolia_contract_address": "0x38097F553ce38747835b429d8674F6861E994955",
+  "sepolia_explorer": "https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955",
   "game": "Coin Flip (50/50, 3.5% house edge, win pays 1.93x)",
   "randomness": "single-tx block.prevrandao + player seed + per-player nonce; recomputable on-chain; validator-influence limit documented in security_review.md",
   "completed_tasks": [

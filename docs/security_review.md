@@ -9,7 +9,7 @@
 
 | # | Finding | Severity | Status |
 |---|---------|----------|--------|
-| 1 | Same-transaction conditional-revert exploit (atomic `flip()`) | **Critical** (prod) / Accepted (testnet) | Documented; mitigation defined, not patched on live demo |
+| 1 | Same-transaction conditional-revert exploit (atomic `flip()`) | **Critical** → ✅ **FIXED on-chain** | Patched in production: `require(msg.sender == tx.origin)` |
 | 2 | `block.prevrandao` randomness is proposer-influenceable | **High** (prod) / Accepted (testnet) | Documented, mitigation path defined |
 | 3 | Owner can withdraw the entire house bankroll | **Medium** | By design; cannot touch player balances (invariant proven) |
 | 4 | Testnet burner private key ships in the client bundle | **Low** | Intentional, testnet-only, low `maxBet` |
@@ -19,9 +19,9 @@
 
 ---
 
-## 1. Same-transaction conditional-revert exploit — **Critical (production)**
+## 1. Same-transaction conditional-revert exploit — **Critical → ✅ FIXED on-chain**
 
-Because `flip()` is `external`, settles atomically in one transaction, and returns `(bool won, uint256 payout)`, **any player (not just a validator) can guarantee a win** by calling it from a wrapper contract and reverting the whole transaction on a loss:
+Originally, because `flip()` is `external`, settles atomically in one transaction, and returns `(bool won, uint256 payout)`, **any player (not just a validator) could guarantee a win** by calling it from a wrapper contract and reverting the whole transaction on a loss:
 
 ```solidity
 function attack() external {
@@ -30,13 +30,19 @@ function attack() external {
 }
 ```
 
-A reverted transaction undoes the in-`flip` balance deduction, so the attacker only ever *realizes* wins and drains the house bankroll for the price of gas. This is the canonical break of **any** same-transaction `prevrandao`/`blockhash` game, and it is **more accessible and more severe than the validator-withholding risk (#2)** — it needs no privileged position, just a contract caller.
+A reverted transaction undoes the in-`flip` balance deduction, so the attacker would only ever *realize* wins and drain the house bankroll for the price of gas. This is the canonical break of **any** same-transaction `prevrandao`/`blockhash` game — more accessible and more severe than the validator-withholding risk (#2).
 
-- **Why accepted here:** testnet only, no real value, and the demo's thesis is *transparency/recomputability* — which still holds (the outcome is honestly derived and recomputable). It does **not** hold up as a real-money casino.
-- **Mitigation (future work, NOT applied to the live demo):**
-  - `require(msg.sender == tx.origin)` blocks contract wrappers (cheap; caveat: also blocks smart-contract / account-abstraction wallets), **or**
-  - move to a **two-transaction commit–reveal or Chainlink VRF** flow so the result is not known within the calling transaction (also fixes #2). VRF is the production-grade fix for both findings at once.
-- **Not patched now by design:** the contract is live, funded, verified, and wired into the frontend. Redeploying to patch a *documented testnet limitation* this close to submission would force a re-fund + re-wire + full re-test — exactly the high-risk, late-stage churn we've deliberately avoided. The honest-limitations writeup is the correct response for a hackathon testnet build.
+### ✅ Fixed in the production deploy
+The first line of `flip()` now enforces a direct-EOA call:
+
+```solidity
+require(msg.sender == tx.origin, "Only direct user calls allowed");
+```
+
+A contract wrapper has `msg.sender == <wrapper address> != tx.origin`, so the call reverts before any state changes — the conditional-revert attack is **impossible on-chain**. Deployed and live at the secured address `0x38097F553ce38747835b429d8674F6861E994955` (Sepolia); the full deposit → flip → withdraw loop was re-verified on the new contract, and all 16 unit tests pass with the guard in place.
+
+- **Trade-off (documented):** `tx.origin == msg.sender` also blocks smart-contract / account-abstraction wallets from playing. For an EOA-based demo this is acceptable; a production build wanting AA support would instead move to **two-transaction commit–reveal or Chainlink VRF** (which also fixes #2), since the result would no longer be known within the calling transaction.
+- **Residual:** this does **not** fix the validator-influence vector (#2) — that still requires VRF/commit-reveal. But the *player-accessible* drain is fully closed.
 
 ## 2. Randomness is verifiable, not manipulation-proof — **High (production)**
 
