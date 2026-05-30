@@ -74,12 +74,15 @@
     "console_errors": "none",
     "mobile_390px": "PASS",
     "controls": "driven by on-chain min/max bet — Sepolia-safe (no BetOutOfRange on defaults)",
-    "sepolia_path": "VERIFIED on live Sepolia — browser E2E (connect burner, deposit, flip WON, VERIFIED panel, feed, withdraw) + contract-level e2e script all pass",
+    "sepolia_path": "VERIFIED in PRODUCTION build (next build + next start) vs live Sepolia — full loop deposit->flip->VERIFIED->withdraw, totalFlips 3->5, zero console errors",
+    "prod_build_env_inlining": "confirmed: built bundle resolves Instant Play to Sepolia (not localhost)",
     "sepolia_bugs_fixed": [
       "config nonce race -> explicit sequential nonces (configure-sepolia.js)",
       "viem signed via eth_sendTransaction (unknown account) -> pass local Account obj as txAccount",
       "feed empty -> getLogs span bounded to 45000 (publicnode caps at 50000)",
-      "transient nonce lag after deposit -> single auto-retry on write"
+      "flip event lookup via getLogs-by-blockHash unsupported -> parse from receipt.logs",
+      "flip-after-deposit revert from RPC nonce lag -> client-side nonce tracking for burner",
+      "burner drained by testing -> topped to 0.035 ETH; gentler default deposit (2x maxBet)"
     ]
   },
   "sepolia_burner_address": "0xd989CAef0B5b45C4dA1924712fa3Bc8aD3d7426A"
