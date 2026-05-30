@@ -37,8 +37,18 @@ export function friendlyError(err: unknown): string {
   if (m.includes("insufficient funds") || m.includes("exceeds the balance") || m.includes("total cost"))
     return "The demo wallet is low on test ETH for gas. Try a smaller amount, or it'll be topped up shortly.";
   if (m.includes("chain") && m.includes("match")) return "Wrong network — please switch your wallet's network.";
-  if (m.includes("fetch") || m.includes("network") || m.includes("timeout") || m.includes("econnrefused"))
-    return "Network hiccup reaching the blockchain. Check your connection and retry.";
-  if (m.includes("nonce")) return "Transaction ordering issue — please retry in a moment.";
+  if (m.includes("429") || m.includes("rate limit") || m.includes("too many requests"))
+    return "The public RPC is rate-limiting right now. Wait a second and tap again — it'll retry on another node.";
+  if (
+    m.includes("timeout") || m.includes("timed out") || m.includes("fetch") ||
+    m.includes("network") || m.includes("econnrefused") || m.includes("connection") ||
+    m.includes("502") || m.includes("503") || m.includes("504") ||
+    m.includes("gateway") || m.includes("unavailable") || m.includes("http request failed")
+  )
+    return "Network is busy or the RPC timed out. Please try again — it usually goes through on the next attempt.";
+  if (m.includes("nonce") || m.includes("replacement") || m.includes("already known"))
+    return "Transaction ordering hiccup on the public node. Please try again in a moment.";
+  if (m.includes("reverted") || m.includes("settlement event"))
+    return "That flip didn't settle on-chain. Please try again.";
   return "Something went wrong with that transaction. Please try again.";
 }

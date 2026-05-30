@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { parseEther, parseEventLogs, toHex } from "viem";
 import { useWallet } from "./wallet";
-import { coinFlipAbi, type Side } from "./contract";
+import { coinFlipAbi, GAS_LIMITS, type Side } from "./contract";
 
 export interface GameRow {
   gameId: bigint;
@@ -66,19 +66,34 @@ export function useGame() {
   // taking max with the chain's view) keeps writes strictly monotonic. For injected
   // wallets we return undefined and let MetaMask manage its own nonce.
   const nonceRef = useRef<number | null>(null);
+  const nonceLock = useRef<Promise<unknown>>(Promise.resolve());
   const isLocalAccount = !!txAccount && typeof txAccount === "object";
 
   useEffect(() => {
     nonceRef.current = null; // resync on (re)connect / account change
   }, [account]);
 
+  // Allocate the next nonce, SERIALIZED via a promise chain so two rapid clicks can never
+  // read-then-increment concurrently and grab the same nonce. Takes max(tracked, chain)
+  // to stay monotonic despite public-RPC lag.
   const nextNonce = useCallback(async (): Promise<number | undefined> => {
     if (!isLocalAccount || !publicClient || !account) return undefined;
-    const chainNonce = await publicClient.getTransactionCount({ address: account, blockTag: "pending" });
-    const n = nonceRef.current === null ? chainNonce : Math.max(nonceRef.current, chainNonce);
-    nonceRef.current = n + 1;
-    return n;
+    const run = async (): Promise<number> => {
+      const chainNonce = await publicClient.getTransactionCount({ address: account, blockTag: "pending" });
+      const n = nonceRef.current === null ? chainNonce : Math.max(nonceRef.current, chainNonce);
+      nonceRef.current = n + 1;
+      return n;
+    };
+    const result = nonceLock.current.catch(() => {}).then(run);
+    nonceLock.current = result.catch(() => {}); // keep the lock promise non-rejecting
+    return result;
   }, [isLocalAccount, publicClient, account]);
+
+  // On any write failure, drop the tracked nonce so the next attempt re-reads the chain
+  // (a failed tx may or may not have consumed its nonce — re-syncing avoids a stuck gap).
+  const resetNonce = useCallback(() => {
+    nonceRef.current = null;
+  }, []);
 
   const refreshState = useCallback(async () => {
     if (!publicClient || !address || !account) return;
@@ -103,7 +118,7 @@ export function useGame() {
       // Local chains are short (scan from genesis); public RPCs cap getLogs ranges
       // (publicnode = 50000 blocks), so bound the window on anything non-local.
       const isLocalChain = publicClient.chain?.id === 31337;
-      const span = isLocalChain ? latest : 45000n;
+      const span = isLocalChain ? latest : 10_000n; // safe across fallback RPCs' getLogs caps
       const fromBlock = latest > span ? latest - span : 0n;
       const logs = await publicClient.getContractEvents({
         address,
@@ -155,16 +170,20 @@ export function useGame() {
             account: txAccount!,
             chain: network.chain,
             nonce,
+            gas: GAS_LIMITS.deposit,
           })
         );
         await publicClient!.waitForTransactionReceipt({ hash });
         await refreshState();
         return hash;
+      } catch (e) {
+        resetNonce();
+        throw e;
       } finally {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce, resetNonce]
   );
 
   const withdraw = useCallback(
@@ -182,16 +201,20 @@ export function useGame() {
             account: txAccount!,
             chain: network.chain,
             nonce,
+            gas: GAS_LIMITS.withdraw,
           })
         );
         await publicClient!.waitForTransactionReceipt({ hash });
         await refreshState();
         return hash;
+      } catch (e) {
+        resetNonce();
+        throw e;
       } finally {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce, resetNonce]
   );
 
   /** Place a flip. Returns the settled game row parsed from the BetSettled event. */
@@ -212,6 +235,7 @@ export function useGame() {
             account: txAccount!,
             chain: network.chain,
             nonce,
+            gas: GAS_LIMITS.flip,
           })
         );
         const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -239,11 +263,14 @@ export function useGame() {
         await refreshState();
         refreshGames();
         return row;
+      } catch (e) {
+        resetNonce();
+        throw e;
       } finally {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, nextNonce]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, nextNonce, resetNonce]
   );
 
   return { state, games, busy, ready, refreshState, refreshGames, deposit, withdraw, flip };

@@ -1,36 +1,81 @@
-# Loom Script — 5-Minute Demo
+# 🎰 Сценарий презентации (Loom) — 5 минут
 
-**Goal:** prove a working, on-chain, *verifiable* casino fast. Use Instant Play (no wallet friction). Don't hard-refresh mid-demo (wallet state is in-memory; `<Link>` nav is fine).
+**Цель видео:** быстро показать полностью рабочий продукт, интегрированный в блокчейн, с акцентом на проверяемую честность и удобство интерфейса (Мгновенная игра без MetaMask).
 
-**Pre-roll checklist:** local node + deploy running (or Sepolia live), `npm run dev` up, browser at `http://localhost:3000` (or the public URL), zoom ~110%, one practice run done.
+### Чек-лист перед стартом записи:
+1. Откройте в браузере сайт на Vercel: **`https://frontend-evg-s-projects.vercel.app`**
+2. Сделайте масштаб страницы в браузере **~110%**, чтобы были хорошо видны все тексты и цифры.
+3. Сделайте один пробный запуск (одну игру) перед записью, чтобы убедиться, что транзакции в сети Sepolia проходят быстро.
+4. Во время записи **не обновляйте страницу через F5/Ctrl+R** (баланс гостевого кошелька хранится в памяти браузера, жесткая перезагрузка его сбросит. Переходить по вкладкам на самом сайте через меню — можно).
 
 ---
 
-### 0:00–1:00 — First impression & landing
-- Open on the landing hero. Read the promise aloud: *"A coin flip you can actually verify."*
-- Point to the badge: **on-chain · provably recomputable**. Hover the three value props (bet / settled on-chain / verify).
-- Scroll to **How it works** (Connect → Deposit → Flip → Withdraw) and the **Provably fair** section — read the `keccak256(prevrandao, player, seed, nonce) % 2` formula.
-- **Say the honest line:** "It's verifiable and recomputable — and we're upfront that prevrandao isn't manipulation-proof; here's our mitigation path." (This earns technical trust early.)
+## ⏱ 0:00–1:00 — Первое впечатление и концепция (Landing Page)
 
-### 1:00–2:00 — Connect & deposit
-- Click **Play**, then **Connect Wallet → ⚡ Instant Play**. Call out: *"No MetaMask, no faucet — a real burner sending real on-chain transactions."*
-- Show the live reads: balance 0, house bankroll, bet limits, edge 3.5% / pays 1.93x.
-- In the **Deposit** field enter `0.5`, click Deposit. Watch the balance update from the confirmed tx. *"That just moved real ETH into the contract."*
+* **Что на экране:** Открыта главная (посадочная) страница сайта.
+* **Что говорить:**
+  > «Приветствую! Меня зовут Евгений, и я представляю проект **Wibe** — полностью ончейн-казино на базе Ethereum Sepolia, в котором честность каждого броска доказуема и проверяема математически.
+  >
+  > Главная идея отражена на первом экране: *„Бросок монеты, честность которого вы действительно можете проверить“*. Обратите внимание на плашку: проект полностью работает ончейн, а каждый результат перепроверяется прямо в браузере.
+  >
+  > *(Прокрутите страницу чуть ниже до раздела "How it works" и "Provably Fair")*
+  >
+  > Игровой цикл предельно прост: подключаем кошелек, делаем депозит, играем и выводим средства. Для расчета честного результата броска 50/50 мы используем формулу хэширования `keccak256`, которая смешивает системную переменную блокчейна `prevrandao`, адрес игрока, порядковый номер игры и случайное число (seed), которое придумывает сам пользователь.
+  >
+  > Подходим к проекту честно: в документации прямо указано, что `prevrandao` — это проверяемый и воспроизводимый рандом, но теоретически он может быть подвержен влиянию валидаторов блоков. В README мы подробно описали, как в продакшене эта система переводится на Chainlink VRF для достижения абсолютной защиты от манипуляций».
 
-### 2:00–3:00 — Gameplay & state animations
-- Pick **Heads**, set `0.05`, hit **Flip**. Narrate the pending state: *"Transaction is confirming on-chain right now."*
-- Coin spins → lands → **win celebration** (`+0.0465 ETH`). Note balance and house bankroll both update — *"exact 1.93x payout, 0.93 profit, paid from the house."*
-- Optionally flip once more to show a loss and the feed growing.
+---
 
-### 3:00–4:00 — On-chain verifiability (the moment)
-- Scroll to the **Provably Fair** panel. Walk the fields: prevrandao, player, seed, nonce.
-- Point to **Recomputed keccak256** and the side-by-side **Recomputed result == On-chain result** with the **✓ VERIFIED** badge. *"We just recomputed the outcome in your browser from public data and it matches the chain. We can't fake a result."*
-- (If Sepolia) click **View on Etherscan** to show the real transaction + event logs.
-- Click an older row in **Recent Flips** — *"any past game re-verifies the same way."*
+## ⏱ 1:00–2:00 — Подключение и Депозит (UX & Deposit)
 
-### 4:00–5:00 — Withdraw, tech challenges & roadmap
-- Switch to **Withdraw**, cash out `0.5`, show balance drop — *"funds were always yours; loop closed: connect → deposit → play → withdraw."*
-- 20-second tech summary: Solidity + OZ, CEI + ReentrancyGuard + liquidity guard, 16 tests at 97% coverage with a test that *recomputes the RNG*, viem frontend, network-aware burner.
-- Hardest problem (10s): *"making 'provably fair' an interactive, honest claim — and catching that our one-click demo pointed at localhost before it embarrassed us on the public URL."*
-- Roadmap (10s): Chainlink VRF to remove proposer influence, more games on the same verifiable engine, an indexer for global history.
-- Close on the verify panel. *"On-chain, verifiable, and honest about its limits. That's Wibe."*
+* **Что на экране:** Нажмите кнопку **Play** в верхнем меню, чтобы перейти к игре. Затем нажмите **Connect Wallet** ➡️ **Instant Play**.
+* **Что говорить:**
+  > «Давайте перейдем к игре. Большинство Web3-проектов требуют от пользователя сложной настройки MetaMask и поиска тестовых токенов. Мы убрали этот барьер. С помощью функции **Instant Play** сайт мгновенно создает для пользователя одноразовый гостевой кошелек прямо в браузере. Это реальный кошелек, который отправляет настоящие транзакции в тестнет Sepolia.
+  >
+  > На экране игры мы сразу видим живые данные из блокчейна: баланс игрока пока равен нулю, баланс банка казино (bankroll) активен, комиссия казино составляет 3.5%, а выигрыш выплачивается с честным коэффициентом 1.93х.
+  >
+  > Давайте сделаем депозит. Введем сумму **0.005 ETH** и нажмем **Deposit**. Наш гостевой кошелек отправляет транзакцию в сеть Sepolia. Буквально через пару секунд баланс обновляется. Отлично, транзакция подтверждена, реальные тестовые ETH зачислены на смарт-контракт».
+
+---
+
+## ⏱ 2:00–3:00 — Игровой процесс и Анимация (Gameplay)
+
+* **Что на экране:** Выберите сторону броска (например, **Heads / Орёл**), в поле ставки (Bet) введите **0.001 ETH** и нажмите синюю кнопку **Flip**.
+* **Что говорить:**
+  > «Теперь сыграем. Я выбираю "Орла", ставлю **0.001 ETH** и запускаю бросок. Обратите внимание на статус: транзакция прямо сейчас обрабатывается нодами сети Sepolia.
+  >
+  > *(Монетка на экране крутится. Ждем остановки)*
+  >
+  > Отлично! Монетка остановилась, и это победа! Мы выиграли **0.00193 ETH** (чистая прибыль составила 0.00093 ETH). Обратите внимание: баланс игрока мгновенно обновился в реальном времени, а баланс казино уменьшился на сумму выплаты. Всё абсолютно синхронизировано с состоянием смарт-контракта».
+  >
+  > *(Если хотите, можно сделать еще одну ставку в 0.001 ETH, чтобы показать анимацию проигрыша и как наполняется таблица истории игр ниже)*.
+
+---
+
+## ⏱ 3:00–4:00 — Доказуемая честность ончейн (The Provably Fair Moment)
+
+* **Что на экране:** Прокрутите страницу вниз до таблицы истории игр (**Recent Flips**) и нажмите на последнюю сыгранную игру, чтобы открыть панель **Provably Fair**.
+* **Что говорить:**
+  > «А теперь самый важный момент — доказательство честности броска. Под игрой у нас находится панель **Provably Fair**.
+  >
+  > Здесь отображаются все входные данные, которые использовались для генерации случайного числа: число `prevrandao` из блока, адрес моего гостевого кошелька, мой персональный `seed` и порядковый номер транзакции (`nonce`).
+  >
+  > Ниже мы видим строку **Recomputed result**. Наш сайт прямо в браузере взял эти публичные данные из блокчейна, прогнал через формулу хэширования, и результат совпал с тем, что выдал смарт-контракт. Зеленая плашка **✓ VERIFIED** доказывает, что казино никак не могло подтасовать результат броска в свою пользу. Любую прошлую игру из таблицы истории можно перепроверить точно так же.
+  >
+  > Мы можем кликнуть по ссылке **View on Etherscan**, чтобы увидеть эту транзакцию в официальном обозревателе блоков Ethereum и убедиться, что событие `BetSettled` со всеми этими данными действительно записано в реестр».
+
+---
+
+## ⏱ 4:00–5:00 — Вывод средств, технические вызовы и итоги
+
+* **Что на экране:** Перейдите во вкладку **Withdraw** (Вывод) на игровой панели. Введите сумму **0.003 ETH** (или ваш выигрыш) и нажмите **Withdraw**. Пока транзакция подтверждается, подводите итоги.
+* **Что говорить:**
+  > «В завершение сессии давайте выведем средства. Я ввожу **0.003 ETH**, нажимаю **Withdraw**, баланс списывается, и средства отправляются обратно на кошелек. Круг замкнулся: мы без труда вошли в игру, сделали депозит, сыграли, проверили честность броска и вывели средства.
+  >
+  > Наш технический стек — это безопасный контракт на Solidity с использованием стандартов OpenZeppelin, защитой от повторного входа (`ReentrancyGuard`) и проверкой ликвидности банка перед каждой игрой. Покрытие тестами составляет 97%. Фронтенд построен на Next.js 15, Viem и Tailwind.
+  >
+  > Главным вызовом при разработке было обеспечение бесшовного UX в реальной тестовой сети. Нам пришлось обойти ограничения публичных RPC-узлов, настроить лимиты и создать автономную систему гостевых кошельков, чтобы проект работал без сбоев на публичном URL.
+  >
+  > В планах по развитию проекта — интеграция Chainlink VRF для идеального рандома, поддержка пулов ликвидности от внешних инвесторов и добавление новых игр на этом же прозрачном ончейн-движке.
+  >
+  > **Wibe** — это доказуемо честное, открытое и удобное казино, которому можно доверять. Спасибо за внимание!»

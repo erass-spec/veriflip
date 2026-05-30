@@ -5,7 +5,6 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
-  http,
   type Account,
   type PublicClient,
   type WalletClient,
@@ -16,6 +15,7 @@ import {
   SEPOLIA_NETWORK,
   INSTANT_NETWORK,
   INSTANT_KEY,
+  makeTransport,
   type NetworkConfig,
   type WalletMode,
 } from "./contract";
@@ -69,10 +69,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     const net = INSTANT_NETWORK;
     try {
       const acct = privateKeyToAccount(INSTANT_KEY);
-      const pub = createPublicClient({ chain: net.chain, transport: http(net.rpcUrl) });
+      const transport = makeTransport(net.chain.id);
+      const pub = createPublicClient({ chain: net.chain, transport });
       // Probe the chain so we fail fast with a friendly message if it isn't reachable.
       await pub.getBlockNumber();
-      const wallet = createWalletClient({ account: acct, chain: net.chain, transport: http(net.rpcUrl) });
+      const wallet = createWalletClient({ account: acct, chain: net.chain, transport: makeTransport(net.chain.id) });
       setMode("mock");
       setNetwork(net);
       setAccount(acct.address);
@@ -112,7 +113,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const pub = createPublicClient({ chain: net.chain, transport: http(net.rpcUrl) });
+      const pub = createPublicClient({ chain: net.chain, transport: makeTransport(net.chain.id) });
       const wallet = createWalletClient({ chain: net.chain, transport: custom(eth) });
       setMode("injected");
       setNetwork(net);

@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createPublicClient, http } from "viem";
-import { LOCAL_NETWORK, SEPOLIA_NETWORK, coinFlipAbi } from "@/lib/contract";
+import { createPublicClient } from "viem";
+import { LOCAL_NETWORK, SEPOLIA_NETWORK, coinFlipAbi, makeTransport } from "@/lib/contract";
 import type { GameRow } from "@/lib/useGame";
 import RecentGames from "./RecentGames";
 
@@ -18,10 +18,10 @@ export default function LiveFeed() {
     (async () => {
       if (!NET.address) return;
       try {
-        const client = createPublicClient({ chain: NET.chain, transport: http(NET.rpcUrl) });
+        const client = createPublicClient({ chain: NET.chain, transport: makeTransport(NET.chain.id) });
         const latest = await client.getBlockNumber();
-        // publicnode caps getLogs at 50000 blocks; local chain is short, scan all.
-        const span = NET === SEPOLIA_NETWORK ? 45000n : latest;
+        // Conservative window so getLogs succeeds across fallback RPCs with smaller caps.
+        const span = NET === SEPOLIA_NETWORK ? 10_000n : latest;
         const fromBlock = latest > span ? latest - span : 0n;
         const logs = await client.getContractEvents({
           address: NET.address,
