@@ -4,8 +4,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { GameRow } from "@/lib/useGame";
 import { fmtEth, shortAddr } from "@/lib/format";
 import { sideLabel } from "@/lib/fair";
+import { useConnectivity, type ConnStatus } from "@/lib/useConnectivity";
+
+const STATUS_UI: Record<ConnStatus, { label: string; text: string; dot: string; ping: string; shadow: string }> = {
+  live: {
+    label: "live",
+    text: "text-emerald-400/70",
+    dot: "bg-emerald-500",
+    ping: "bg-emerald-500",
+    shadow: "shadow-[0_0_8px_rgba(52,211,153,0.9)]",
+  },
+  reconnecting: {
+    label: "reconnecting…",
+    text: "text-amber-400/80",
+    dot: "bg-amber-400",
+    ping: "bg-amber-400",
+    shadow: "shadow-[0_0_8px_rgba(251,191,36,0.9)]",
+  },
+  offline: {
+    label: "offline",
+    text: "text-red-400/80",
+    dot: "bg-red-500",
+    ping: "bg-red-500",
+    shadow: "shadow-[0_0_8px_rgba(239,68,68,0.9)]",
+  },
+};
 
 function TerminalHeader() {
+  const status = useConnectivity();
+  const ui = STATUS_UI[status];
   return (
     <div className="flex items-center justify-between border-b border-white/10 bg-black/30 px-4 py-2.5">
       <div className="flex items-center gap-2">
@@ -16,12 +43,12 @@ function TerminalHeader() {
         </span>
         <span className="ml-1 font-mono text-xs text-white/40">veriflip@sepolia — live feed</span>
       </div>
-      <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-emerald-400/70">
+      <span className={`flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider transition-colors duration-500 ${ui.text}`}>
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+          <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 transition-colors duration-500 ${ui.ping}`} />
+          <span className={`relative inline-flex h-2 w-2 rounded-full transition-colors duration-500 ${ui.dot} ${ui.shadow}`} />
         </span>
-        live
+        {ui.label}
       </span>
     </div>
   );
