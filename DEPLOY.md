@@ -1,6 +1,17 @@
 # Deploying the Public Demo (Sepolia + Vercel)
 
-Everything is prepared. There is exactly **one step only you can do** — fund the deployer from a faucet — then two commands.
+## ✅ Status: contract is LIVE on Sepolia
+- **CoinFlip:** [`0x4Dc741EB5D5e7491C50013228157f6427F59fd4b`](https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b) — deployed, limits 0.0002–0.002, house bankroll 0.02 ETH, Instant-Play burner funded.
+- Full loop **verified on live Sepolia** in a real browser (connect → deposit → flip WON → ✓ VERIFIED → withdraw) and via `scripts/e2e-sepolia.js`.
+- `frontend/.env.local` is wired (`NEXT_PUBLIC_SEPOLIA_ADDRESS` + burner key). `frontend/npm run build` passes.
+
+**Only remaining step → deploy the frontend (needs your Vercel auth). Jump to Step 4.**
+
+---
+
+<details><summary>Steps 1–3 (already done — for reference / re-deploy)</summary>
+
+Everything below was already executed. Keep for re-deploying from scratch.
 
 ## Step 1 — Fund the deployer (YOU)
 Keys are already generated (private keys live in gitignored `.env` and `frontend/.env.local`; only public addresses are recorded).
@@ -30,15 +41,20 @@ echo "NEXT_PUBLIC_SEPOLIA_ADDRESS=<address printed above>" >> frontend/.env.loca
 cd frontend && npm run build
 ```
 
-## Step 4 — Deploy the frontend to Vercel
+</details>
+
+## Step 4 — Deploy the frontend to Vercel  ← **DO THIS**
+From the repo root. The command reads both env values straight from `frontend/.env.local`, so nothing secret is typed by hand:
+
 ```bash
 cd frontend
-npx vercel login          # one-time, if not already authed
+npx vercel login            # one-time, if not already authed
 npx vercel --prod \
-  --build-env NEXT_PUBLIC_SEPOLIA_ADDRESS=<address> \
-  --build-env NEXT_PUBLIC_SEPOLIA_BURNER_KEY=<value from frontend/.env.local>
+  --build-env NEXT_PUBLIC_SEPOLIA_ADDRESS="$(grep '^NEXT_PUBLIC_SEPOLIA_ADDRESS=' .env.local | cut -d= -f2)" \
+  --build-env NEXT_PUBLIC_SEPOLIA_BURNER_KEY="$(grep '^NEXT_PUBLIC_SEPOLIA_BURNER_KEY=' .env.local | cut -d= -f2)"
 ```
-Or in the Vercel dashboard: set **Root Directory = `frontend`**, add both `NEXT_PUBLIC_*` env vars, and deploy. `vercel.json` is already in `frontend/`.
+
+Accept the prompts (it auto-detects Next.js; **Root Directory = current dir**). Or via the **dashboard**: import the repo, set **Root Directory = `frontend`**, add the two `NEXT_PUBLIC_*` env vars (copy from `frontend/.env.local`), deploy. `vercel.json` is already there.
 
 ## Step 5 — Verify
 - Open the Vercel URL → **Play → ⚡ Instant Play** → deposit a tiny amount → flip → confirm the verify panel shows **✓ VERIFIED** and the Etherscan link resolves.
