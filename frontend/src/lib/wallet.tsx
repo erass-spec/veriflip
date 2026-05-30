@@ -13,7 +13,8 @@ import { privateKeyToAccount } from "viem/accounts";
 import {
   LOCAL_NETWORK,
   SEPOLIA_NETWORK,
-  MOCK_PLAYER_KEY,
+  INSTANT_NETWORK,
+  INSTANT_KEY,
   type NetworkConfig,
   type WalletMode,
 } from "./contract";
@@ -59,27 +60,23 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const connectMock = useCallback(async () => {
     setConnecting(true);
     setError(null);
+    const net = INSTANT_NETWORK;
     try {
-      const acct = privateKeyToAccount(MOCK_PLAYER_KEY);
-      const pub = createPublicClient({
-        chain: LOCAL_NETWORK.chain,
-        transport: http(LOCAL_NETWORK.rpcUrl),
-      });
-      // Probe the node so we fail fast with a friendly message if it isn't running.
+      const acct = privateKeyToAccount(INSTANT_KEY);
+      const pub = createPublicClient({ chain: net.chain, transport: http(net.rpcUrl) });
+      // Probe the chain so we fail fast with a friendly message if it isn't reachable.
       await pub.getBlockNumber();
-      const wallet = createWalletClient({
-        account: acct,
-        chain: LOCAL_NETWORK.chain,
-        transport: http(LOCAL_NETWORK.rpcUrl),
-      });
+      const wallet = createWalletClient({ account: acct, chain: net.chain, transport: http(net.rpcUrl) });
       setMode("mock");
-      setNetwork(LOCAL_NETWORK);
+      setNetwork(net);
       setAccount(acct.address);
       setPublicClient(pub as PublicClient);
       setWalletClient(wallet);
     } catch {
       setError(
-        "Couldn't reach the local chain. Run `npm run node` then `npm run deploy:local` first."
+        net.chain.id === LOCAL_NETWORK.chain.id
+          ? "Couldn't reach the local chain. Run `npm run node` then `npm run deploy:local` first."
+          : "Couldn't reach the Sepolia demo right now — the network may be busy. Please retry."
       );
     } finally {
       setConnecting(false);

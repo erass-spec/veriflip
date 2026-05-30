@@ -2,16 +2,41 @@ const { ethers, network, artifacts } = require("hardhat");
 const fs = require("fs");
 const path = require("path");
 
-// Deploys CoinFlip, seeds the house bankroll (local only), and exports the ABI +
-// address to BOTH deployments/<network>.json and frontend/src/contracts/ so the
-// frontend always has a fresh, in-sync contract reference.
+// Deploys CoinFlip, configures it for the target network, exports the ABI + address
+// to deployments/<network>.json and frontend/src/contracts/, and (on public testnets)
+// funds the house bankroll + the Instant-Play burner so the demo works end to end.
+//
+// Tunables via env (sensible defaults per network):
+//   HOUSE_FUND_ETH   amount to seed the house bankroll
+//   BURNER_FUND_ETH  amount to send the player burner for gas + deposits (testnet only)
+//   MIN_BET_ETH / MAX_BET_ETH  bet limits (kept low on testnet so the bankroll lasts)
+
+function readEnvVar(file, key) {
+  try {
+    const txt = fs.readFileSync(file, "utf8");
+    const m = txt.match(new RegExp(`^${key}=(.+)$`, "m"));
+    return m ? m[1].trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   const [deployer] = await ethers.getSigners();
   const net = network.name;
-  console.log(`\n[deploy] network=${net} deployer=${deployer.address}`);
+  const isLocal = net === "localhost" || net === "hardhat";
 
   const balance = await ethers.provider.getBalance(deployer.address);
+  console.log(`\n[deploy] network=${net} deployer=${deployer.address}`);
   console.log(`[deploy] deployer balance=${ethers.formatEther(balance)} ETH`);
+
+  if (!isLocal && balance === 0n) {
+    console.error(
+      `\n[deploy] ✗ Deployer has 0 ETH on ${net}. Fund ${deployer.address} from a faucet, then re-run.\n`
+    );
+    process.exitCode = 1;
+    return;
+  }
 
   const CoinFlip = await ethers.getContractFactory("CoinFlip");
   const coinflip = await CoinFlip.deploy();
@@ -19,19 +44,35 @@ async function main() {
   const address = await coinflip.getAddress();
   console.log(`[deploy] CoinFlip deployed at ${address}`);
 
-  // Seed the house bankroll on local networks so the demo loop works out of the box.
-  const isLocal = net === "localhost" || net === "hardhat";
-  if (isLocal) {
-    const fund = ethers.parseEther("100");
-    await (await coinflip.fundHouse({ value: fund })).wait();
-    console.log(`[deploy] funded house bankroll with ${ethers.formatEther(fund)} ETH`);
-  } else {
-    console.log("[deploy] NOTE: fund the house via fundHouse() before players can win.");
+  // Bet limits — small on testnet so a modest bankroll covers many flips.
+  const minBet = ethers.parseEther(process.env.MIN_BET_ETH || (isLocal ? "0.001" : "0.0002"));
+  const maxBet = ethers.parseEther(process.env.MAX_BET_ETH || (isLocal ? "1" : "0.002"));
+  await (await coinflip.setBetLimits(minBet, maxBet)).wait();
+  console.log(`[deploy] bet limits set: ${ethers.formatEther(minBet)} – ${ethers.formatEther(maxBet)} ETH`);
+
+  // Seed the house bankroll.
+  const houseFund = ethers.parseEther(process.env.HOUSE_FUND_ETH || (isLocal ? "100" : "0.02"));
+  await (await coinflip.fundHouse({ value: houseFund })).wait();
+  console.log(`[deploy] house bankroll funded: ${ethers.formatEther(houseFund)} ETH`);
+
+  // On public testnets, fund the Instant-Play burner so a visitor can play with no wallet.
+  if (!isLocal) {
+    const burnerKey = readEnvVar(
+      path.join(__dirname, "..", "frontend", ".env.local"),
+      "NEXT_PUBLIC_SEPOLIA_BURNER_KEY"
+    );
+    if (burnerKey) {
+      const burnerAddr = new ethers.Wallet(burnerKey).address;
+      const burnerFund = ethers.parseEther(process.env.BURNER_FUND_ETH || "0.012");
+      await (await deployer.sendTransaction({ to: burnerAddr, value: burnerFund })).wait();
+      console.log(`[deploy] funded Instant-Play burner ${burnerAddr} with ${ethers.formatEther(burnerFund)} ETH`);
+    } else {
+      console.log("[deploy] NOTE: no burner key in frontend/.env.local — run `npm run keygen` for Instant Play.");
+    }
   }
 
   const deployTx = coinflip.deploymentTransaction();
   const receipt = deployTx ? await deployTx.wait() : null;
-
   const artifact = await artifacts.readArtifact("CoinFlip");
 
   const meta = {
@@ -41,34 +82,30 @@ async function main() {
     deployer: deployer.address,
     txHash: deployTx ? deployTx.hash : null,
     blockNumber: receipt ? receipt.blockNumber : null,
+    minBet: ethers.formatEther(minBet),
+    maxBet: ethers.formatEther(maxBet),
+    houseFunded: ethers.formatEther(houseFund),
     deployedAt: new Date().toISOString(),
   };
 
-  // 1) deployments/<network>.json
   const deploymentsDir = path.join(__dirname, "..", "deployments");
   fs.mkdirSync(deploymentsDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(deploymentsDir, `${net}.json`),
-    JSON.stringify(meta, null, 2)
-  );
-  // Spec alias: local networks also persist to deployments/local.json
+  fs.writeFileSync(path.join(deploymentsDir, `${net}.json`), JSON.stringify(meta, null, 2));
   if (isLocal) {
     fs.writeFileSync(path.join(deploymentsDir, "local.json"), JSON.stringify(meta, null, 2));
   }
 
-  // 2) frontend/src/contracts/{CoinFlip.json (abi), deployment-<network>.json}
   const feDir = path.join(__dirname, "..", "frontend", "src", "contracts");
   fs.mkdirSync(feDir, { recursive: true });
-  fs.writeFileSync(
-    path.join(feDir, "CoinFlip.json"),
-    JSON.stringify({ abi: artifact.abi }, null, 2)
-  );
-  fs.writeFileSync(
-    path.join(feDir, `deployment-${net}.json`),
-    JSON.stringify(meta, null, 2)
-  );
+  fs.writeFileSync(path.join(feDir, "CoinFlip.json"), JSON.stringify({ abi: artifact.abi }, null, 2));
+  fs.writeFileSync(path.join(feDir, `deployment-${net}.json`), JSON.stringify(meta, null, 2));
 
-  console.log(`[deploy] wrote deployments/${net}.json and frontend/src/contracts/*`);
+  console.log(`[deploy] wrote deployments/${net}.json + frontend/src/contracts/*`);
+  if (!isLocal) {
+    console.log("\n[deploy] Set these in the frontend build env (frontend/.env.local & Vercel):");
+    console.log(`   NEXT_PUBLIC_SEPOLIA_ADDRESS=${address}`);
+    console.log(`   (NEXT_PUBLIC_SEPOLIA_BURNER_KEY is already in frontend/.env.local)`);
+  }
   console.log(`[deploy] done.\n`);
 }
 

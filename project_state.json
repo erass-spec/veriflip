@@ -1,7 +1,7 @@
 {
   "project": "Wibe — On-Chain Coin Flip Casino",
   "current_phase": "PHASE II — Remote Deployment (awaiting user gate)",
-  "current_step": "Step 6 — Sepolia key generation (BLOCKED on user confirmation)",
+  "current_step": "Steps 7-13 prepped; BLOCKED on user funding deployer for Sepolia broadcast",
   "game": "Coin Flip (50/50, 3.5% house edge, win pays 1.93x)",
   "randomness": "single-tx block.prevrandao + player seed + per-player nonce; recomputable on-chain; validator-influence limit documented in security_review.md",
   "completed_tasks": [
@@ -20,22 +20,28 @@
     "mobile 390px responsive verified"
   ],
   "pending_tasks": [
-    "USER GATE: confirm Sepolia key-gen + public deploy",
-    "sepolia deploy (after funding)",
-    "public frontend deploy (Vercel)",
-    "security review doc",
-    "judge scoring sim doc",
-    "notion_submission / ai_usage / loom_script docs"
+    "USER ACTION: fund deployer 0x3bd06a28375b6c0E81564eDe001697F9B47E62A4 (~0.1 Sepolia ETH)",
+    "then: bash scripts/deploy-sepolia.sh",
+    "then: set NEXT_PUBLIC_SEPOLIA_ADDRESS + frontend build + vercel --prod",
+    "update live links in README + notion_submission"
+  ],
+  "completed_docs": [
+    "security_review.md (5 findings, honest ratings)",
+    "judge_scoring.md (self-critical, 7.8/10)",
+    "notion_submission.md",
+    "ai_usage.md",
+    "loom_script.md (minute-by-minute)",
+    "DEPLOY.md + deploy-sepolia.sh + vercel.json"
   ],
   "blockers": [
-    "Sepolia deploy needs a funded deployer key — gated on user confirmation",
-    "Public frontend deploy needs Vercel/Netlify credentials"
+    "Sepolia broadcast needs the deployer funded (only the user can faucet) — everything else is ready",
+    "Vercel deploy needs user auth (commands generated in DEPLOY.md)"
   ],
   "gates": [
     "PAUSE for user confirmation before real key generation and public deployment"
   ],
-  "local_deployer_address": "",
-  "sepolia_deployer_address": "",
+  "local_deployer_address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "sepolia_deployer_address": "0x3bd06a28375b6c0E81564eDe001697F9B47E62A4",
   "contracts": {
     "CoinFlip": {
       "compiler": "0.8.24",
@@ -43,13 +49,21 @@
       "payout_bps": 19300,
       "house_edge": "3.5%",
       "tests_passing": 16,
-      "coverage": { "statements": "97.06%", "branch": "80.95%", "lines": "98.08%", "functions": "90.91%" }
+      "coverage": {
+        "statements": "97.06%",
+        "branch": "80.95%",
+        "lines": "98.08%",
+        "functions": "90.91%"
+      }
     }
   },
   "frontend": {
     "framework": "Next.js 15.1.6 (App Router)",
     "stack": "viem 2, framer-motion 11, TailwindCSS 3.4 (TypeScript)",
-    "routes": ["/ (landing)", "/play (casino)"],
+    "routes": [
+      "/ (landing)",
+      "/play (casino)"
+    ],
     "build": "passing — / 242kB, /play 244kB First Load JS",
     "mock_wallet": "Hardhat Account #1 burner against local node",
     "build_first_load_kb": 244
@@ -59,5 +73,6 @@
     "e2e_loop": "PASS — deposit 0.5, flip won +0.0465, recompute VERIFIED, withdraw 0.5",
     "console_errors": "none",
     "mobile_390px": "PASS"
-  }
+  },
+  "sepolia_burner_address": "0xd989CAef0B5b45C4dA1924712fa3Bc8aD3d7426A"
 }

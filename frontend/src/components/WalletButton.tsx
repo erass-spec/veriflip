@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { shortAddr } from "@/lib/format";
+import { INSTANT_SUBLABEL } from "@/lib/contract";
 
 export default function WalletButton() {
   const { account, network, mode, connecting, connectMock, connectInjected, disconnect, isOwner } =
@@ -46,9 +47,9 @@ export default function WalletButton() {
             }}
             className="flex w-full flex-col items-start gap-0.5 border-b border-white/5 px-4 py-3 text-left hover:bg-white/5"
           >
-            <span className="font-semibold text-neon-cyan">⚡ Mock Wallet (instant demo)</span>
+            <span className="font-semibold text-neon-cyan">⚡ Instant Play (no wallet)</span>
             <span className="text-xs text-white/50">
-              Burner account on the local chain. Real on-chain txs, zero setup.
+              Burner account · {INSTANT_SUBLABEL}. Real on-chain txs, zero setup.
             </span>
           </button>
           <button
