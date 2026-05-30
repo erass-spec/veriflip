@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { formatEther } from "viem";
 import { AnimatePresence, motion } from "framer-motion";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
@@ -8,7 +9,8 @@ import { fmtEth, friendlyError } from "@/lib/format";
 import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
 import CoinAnimation from "./CoinAnimation";
 
-const QUICK = ["0.01", "0.05", "0.1", "0.25"];
+// Trim float noise to a clean, parseable decimal string.
+const trim = (n: number) => parseFloat(n.toFixed(8)).toString();
 
 export default function GamePanel({
   api,
@@ -20,15 +22,34 @@ export default function GamePanel({
   const { account, network } = useWallet();
   const { state, deposit, withdraw, flip } = api;
   const [choice, setChoice] = useState<Side>(0);
-  const [amount, setAmount] = useState("0.05");
+  const [amount, setAmount] = useState("");
   const [coin, setCoin] = useState<"idle" | "spinning" | "settled">("idle");
   const [last, setLast] = useState<GameRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<null | "flip" | "deposit" | "withdraw">(null);
   const [banking, setBanking] = useState<"deposit" | "withdraw">("deposit");
-  const [bankAmt, setBankAmt] = useState("0.5");
+  const [bankAmt, setBankAmt] = useState("");
 
   const noContract = !network?.address || network.address === ("0x" as string);
+
+  // Derive controls from the on-chain bet limits so the same UI works on any network
+  // (local maxBet 1 ETH vs. Sepolia maxBet 0.002 ETH). Hardcoded values would throw
+  // BetOutOfRange / insufficient-gas on the small-limit public demo.
+  const maxEth = state.maxBet > 0n ? Number(formatEther(state.maxBet)) : 0;
+  const minEth = state.minBet > 0n ? Number(formatEther(state.minBet)) : 0;
+  const chips = useMemo(
+    () => (maxEth > 0 ? [0.2, 0.5, 0.8, 1].map((f) => trim(maxEth * f)) : ["0.01", "0.05", "0.1", "0.25"]),
+    [maxEth]
+  );
+
+  useEffect(() => {
+    if (maxEth <= 0) return;
+    const a = Number(amount);
+    if (!(a >= minEth && a <= maxEth)) setAmount(trim(maxEth * 0.5)); // snap bet into range
+    const b = Number(bankAmt);
+    if (!(b > 0) || b > maxEth * 5) setBankAmt(trim(maxEth * 3)); // affordable deposit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minEth, maxEth]);
 
   async function onFlip() {
     setError(null);
@@ -166,7 +187,7 @@ export default function GamePanel({
           <span className="text-white/40">ETH</span>
         </div>
         <div className="flex gap-2">
-          {QUICK.map((q) => (
+          {chips.map((q) => (
             <button
               key={q}
               onClick={() => setAmount(q)}
