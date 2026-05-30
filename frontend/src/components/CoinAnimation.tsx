@@ -2,6 +2,7 @@
 
 import { motion, useAnimation } from "framer-motion";
 import { useEffect, useRef } from "react";
+import TokenFace from "./TokenFace";
 
 type Status = "idle" | "spinning" | "settled";
 
@@ -47,24 +48,16 @@ export default function CoinAnimation({
     };
   }, [status, result, controls]);
 
-  const faceStyle = (bg: string, glow: string): React.CSSProperties => ({
-    fontSize: size * 0.42,
-    background: bg,
-    boxShadow: `inset 0 0 ${size * 0.15}px rgba(0,0,0,0.35), 0 0 ${size * 0.2}px ${glow}`,
-    color: "#0a0e1a",
-    border: `${size * 0.03}px solid rgba(255,255,255,0.25)`,
-  });
-
   return (
     <div className="coin-scene" style={{ width: size, height: size }}>
       <motion.div className="coin" style={{ width: size, height: size }} animate={controls}>
-        {/* Heads */}
-        <div className="coin-face" style={faceStyle("radial-gradient(circle at 35% 30%, #ffe57a, #ffd23f 45%, #d99e1a)", "rgba(255,210,63,0.6)")}>
-          🪙
+        {/* Heads (front) */}
+        <div className="coin-face">
+          <TokenFace v="heads" />
         </div>
-        {/* Tails */}
-        <div className="coin-face coin-back" style={faceStyle("radial-gradient(circle at 35% 30%, #8fe9ff, #21d4fd 45%, #1597c0)", "rgba(33,212,253,0.6)")}>
-          💎
+        {/* Tails (back) — flipped on the X axis to match the rotateX spin */}
+        <div className="coin-face" style={{ transform: "rotateX(180deg)" }}>
+          <TokenFace v="tails" />
         </div>
       </motion.div>
     </div>

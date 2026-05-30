@@ -135,7 +135,7 @@ export default function GamePanel({
   const won = last?.won;
 
   return (
-    <div className="card relative overflow-hidden p-6">
+    <div className="card relative overflow-hidden p-6 shadow-2xl transition-all duration-500 hover:border-emerald-500/10">
       {/* Balance header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
@@ -209,13 +209,13 @@ export default function GamePanel({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             disabled={!!pending}
-            className="w-full rounded-xl border border-white/10 bg-ink-900/60 px-4 py-3 font-mono text-lg outline-none focus:border-neon-green/50"
+            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition focus:border-emerald-400/60 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.15)]"
           />
           <button
             onClick={setMax}
             disabled={!canMax}
             title="Bet the most you can: min(balance, max bet)"
-            className="rounded-xl border border-neon-cyan/40 px-3 py-3 text-xs font-bold text-neon-cyan transition hover:bg-neon-cyan/10 disabled:opacity-40"
+            className="rounded-xl border border-emerald-400/40 bg-emerald-400/5 px-3 py-3 text-xs font-bold text-emerald-300 shadow-[0_0_14px_-3px_rgba(52,211,153,0.7)] transition hover:bg-emerald-400/15 hover:shadow-[0_0_20px_-2px_rgba(52,211,153,0.9)] disabled:opacity-40 disabled:shadow-none"
           >
             MAX
           </button>
@@ -310,7 +310,7 @@ export default function GamePanel({
             value={bankAmt}
             onChange={(e) => setBankAmt(e.target.value)}
             disabled={!!pending}
-            className="w-full rounded-xl border border-white/10 bg-ink-900/60 px-4 py-2.5 font-mono outline-none focus:border-neon-cyan/50"
+            className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-2.5 font-mono outline-none transition focus:border-emerald-400/60 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.15)]"
           />
           <button onClick={onBank} disabled={!!pending} className="btn-ghost whitespace-nowrap capitalize">
             {pending === banking ? "…" : banking}

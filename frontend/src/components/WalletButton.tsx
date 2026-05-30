@@ -13,12 +13,15 @@ export default function WalletButton() {
   if (account) {
     return (
       <div className="flex items-center gap-2">
-        <span className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 sm:flex">
-          <span className="h-2 w-2 rounded-full bg-neon-green shadow-glow" />
+        <span className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5 text-xs text-white/70 backdrop-blur sm:flex">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" />
+          </span>
           {network?.label}
-          {mode === "mock" && <span className="text-neon-cyan">· demo</span>}
+          {mode === "mock" && <span className="text-cyan-400">· demo</span>}
         </span>
-        <div className="rounded-xl border border-white/10 bg-ink-700 px-3 py-2 font-mono text-sm">
+        <div className="rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 font-mono text-sm backdrop-blur">
           {isOwner && <span className="mr-1 text-neon-gold">👑</span>}
           {shortAddr(account)}
         </div>

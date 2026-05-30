@@ -22,10 +22,10 @@ export default function PlayPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <header className="mb-6 flex items-center justify-between">
+      <header className="glass mb-6 flex items-center justify-between rounded-2xl px-4 py-3">
         <Link href="/" className="flex items-center gap-2">
           <BrandLogo />
-          <span className="text-white/30">/ play</span>
+          <span className="font-mono text-xs text-white/30">/ play</span>
         </Link>
         <WalletButton />
       </header>

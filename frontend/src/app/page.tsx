@@ -30,7 +30,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="relative grid grid-cols-1 items-center gap-8 py-12 md:grid-cols-2 md:py-20">
+      <section className="relative grid grid-cols-1 items-center gap-6 pb-8 pt-2 md:grid-cols-2 md:pb-12 md:pt-6">
         {/* Cyberpunk perspective mesh */}
         <div className="perspective-grid pointer-events-none absolute -inset-x-8 -top-24 -z-20 h-[140%]" />
         {/* Aurora glow behind the hero */}
@@ -80,7 +80,7 @@ export default function Landing() {
       </section>
 
       {/* 3-second value props */}
-      <section className="grid grid-cols-1 gap-4 py-6 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-3">
         {[
           { t: "Bet a coin flip", d: "Pick heads or tails, set your stake, flip. Instant settlement.", i: "🪙" },
           { t: "Settled on-chain", d: "Funds, randomness and payouts live in one audited Solidity contract.", i: "⛓️" },
@@ -99,8 +99,8 @@ export default function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="py-16">
-        <motion.h2 {...fade()} className="mb-8 text-center text-3xl font-bold gradient-text">
+      <section className="py-10">
+        <motion.h2 {...fade()} className="mb-6 text-center text-3xl font-bold gradient-text">
           How it works
         </motion.h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -126,7 +126,7 @@ export default function Landing() {
       </section>
 
       {/* Provably fair */}
-      <section id="fair" className="py-16">
+      <section id="fair" className="py-10">
         <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
           <motion.div {...fade()}>
             <h2 className="text-3xl font-bold gradient-text">Provably fair, not “trust me”</h2>
@@ -166,7 +166,7 @@ export default function Landing() {
       </section>
 
       {/* Stats / why ethereum */}
-      <section className="grid grid-cols-2 gap-4 py-8 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-4 py-5 sm:grid-cols-4">
         {[
           { k: "50 / 50", v: "fair odds" },
           { k: PAYOUT_MULTIPLIER, v: "winner payout" },
@@ -185,7 +185,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="relative py-16">
+      <section className="relative py-10">
         {/* Neon-green aurora behind the CTA + footer */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 mx-auto h-72 w-3/4 rounded-full bg-neon-green/15 blur-3xl" />
         <motion.div
@@ -202,7 +202,7 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      <footer className="relative border-t border-white/10 py-8 text-center text-sm text-white/30">
+      <footer className="relative border-t border-white/10 py-6 text-center text-sm text-white/30">
         VeriFlip · on-chain coin flip · built for the hackathon · play responsibly, testnet only.
       </footer>
     </main>
