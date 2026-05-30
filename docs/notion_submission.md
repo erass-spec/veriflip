@@ -40,5 +40,18 @@ Making "provably fair" an *honest, interactive* claim rather than marketing. Tha
 3. Per-user wallet sessions + persistence; frontend test suite.
 4. Subgraph/indexer for a global, paginated history feed.
 
+## Production hardening roadmap (from the pre-submission audit)
+
+**Randomness — eliminate the residual validator vector (finding #2).** The player-accessible drain is already fixed on-chain (`tx.origin` guard, finding #1). The remaining risk is a proposer who is also the bettor withholding their own block to re-roll `prevrandao` — economically irrational at our 0.002 maxBet, but real at scale.
+- **Chainlink VRF v2.5 (recommended):** make `flip()` asynchronous — `requestRandomWords()` records the pending bet (player, choice, stake, nonce); the `fulfillRandomWords()` callback settles from the verifiable random word. Because the result is unknowable in the requesting transaction, this kills *both* validator influence and any same-tx revert vector at once. v2.5 supports **native-token payment** (no LINK required) via the subscription/consumer model. UX cost: a short "awaiting VRF" pending state (2 on-chain steps).
+- **Commit–reveal (no oracle):** commit `keccak(seed)` in tx1, reveal in tx2 settling against a *future* blockhash. Cheaper and oracle-free, but worse UX and still leaves slight proposer influence on the reveal block.
+
+**Mainnet gas profile.** Current settings (`optimizer runs: 200` + `viaIR`) are already sound. If ever deployed to mainnet: pack `minBet`/`maxBet`/`totalFlips` into fewer storage slots, keep caching `balances[msg.sender]` (already done), `bytes32 seed` is already `calldata` via `external`. These are storage-layout micro-wins — **not worth redeploying a working, verified testnet contract** (any contract edit forces re-wire + re-fund + full re-verify).
+
+**Frontend / infra.**
+- Safe security headers shipped (`X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS). A strict **Content-Security-Policy** is deliberately deferred (would need `connect-src` for all fallback RPC hosts + `'unsafe-inline'` for styles); ship it **report-only** first to avoid breaking live RPC calls.
+- RPC resilience: bounded `waitForTransactionReceipt` (120s) so a dropped connection can't hang the UI, and on a flip error the balance + feed are reconciled (a tx that errored client-side but landed on-chain still surfaces).
+- Mobile floor is **390px** (navbar verified with ~8px margin when connected); 360/320px legacy devices would need a further-condensed nav.
+
 ## AI usage
 See `docs/ai_usage.md` for the full report.

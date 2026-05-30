@@ -175,7 +175,7 @@ export function useGame() {
             gas: GAS_LIMITS.deposit,
           })
         );
-        await publicClient!.waitForTransactionReceipt({ hash });
+        await publicClient!.waitForTransactionReceipt({ hash, timeout: 120_000 });
         await refreshState();
         return hash;
       } catch (e) {
@@ -206,7 +206,7 @@ export function useGame() {
             gas: GAS_LIMITS.withdraw,
           })
         );
-        await publicClient!.waitForTransactionReceipt({ hash });
+        await publicClient!.waitForTransactionReceipt({ hash, timeout: 120_000 });
         await refreshState();
         return hash;
       } catch (e) {
@@ -240,7 +240,7 @@ export function useGame() {
             gas: GAS_LIMITS.flip,
           })
         );
-        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 120_000 });
         if (receipt.status === "reverted") throw new Error("flip transaction reverted on-chain");
         // Parse the BetSettled event straight from the receipt's own logs — no extra
         // RPC round-trip and no reliance on getLogs-by-blockHash (unsupported on some
@@ -267,6 +267,10 @@ export function useGame() {
         return row;
       } catch (e) {
         resetNonce();
+        // A tx that errored client-side (dropped connection / RPC timeout) may still have
+        // landed on-chain — reconcile balance + feed so a settled flip isn't lost from the UI.
+        refreshState();
+        refreshGames();
         throw e;
       } finally {
         setBusy(false);
