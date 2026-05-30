@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
-import WalletButton from "@/components/WalletButton";
-import BrandLogo from "@/components/BrandLogo";
+import Navbar from "@/components/Navbar";
 import GamePanel from "@/components/GamePanel";
 import VerifyPanel from "@/components/VerifyPanel";
 import RecentGames from "@/components/RecentGames";
@@ -22,13 +20,7 @@ export default function PlayPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <header className="sticky top-3 z-50 mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 shadow-lg backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-2">
-          <BrandLogo />
-          <span className="font-mono text-xs text-white/30">/ play</span>
-        </Link>
-        <WalletButton />
-      </header>
+      <Navbar />
 
       {error && (
         <div className="mb-4 flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
