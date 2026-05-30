@@ -39,7 +39,12 @@ export default function CoinAnimation({
             transition: { duration: 1.4, ease: [0.2, 0.8, 0.2, 1] },
           });
       } else {
-        controls.start({ rotateX: spinRef.current, transition: { duration: 0.3 } });
+        // Idle — tactilely mirror the player's selected side (Heads = 0°, Tails = 180°),
+        // rotating the shortest way from wherever the coin currently rests.
+        const base = Math.round(spinRef.current / 360) * 360;
+        const target = result === undefined ? base : base + (result === 1 ? 180 : 0);
+        spinRef.current = target;
+        controls.start({ rotateX: target, transition: { duration: 0.6, ease: [0.2, 0.8, 0.2, 1] } });
       }
     }
     run();

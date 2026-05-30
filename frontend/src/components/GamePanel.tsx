@@ -15,6 +15,40 @@ const LOW_GAS_WEI = parseEther("0.0015");
 // Trim float noise to a clean, parseable decimal string.
 const trim = (n: number) => parseFloat(n.toFixed(8)).toString();
 
+function Spinner() {
+  return (
+    <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function WalletIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_4px_rgba(52,211,153,0.8)]">
+      <rect x="3" y="6" width="18" height="13" rx="2.5" stroke="#34d399" strokeWidth="2" />
+      <circle cx="16.5" cy="12.5" r="1.3" fill="#34d399" />
+    </svg>
+  );
+}
+
+function VaultIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_4px_rgba(34,211,238,0.7)]">
+      <rect x="4" y="10" width="16" height="10" rx="2" stroke="#22d3ee" strokeWidth="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Small uppercase step label that guides the player through the flow.
+function StepLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">{children}</div>
+  );
+}
+
 export default function GamePanel({
   api,
   onSettled,
@@ -74,6 +108,19 @@ export default function GamePanel({
   const maxAffordableWei = state.balance < state.maxBet ? state.balance : state.maxBet;
   const canMax = !pending && maxAffordableWei >= state.minBet && maxAffordableWei > 0n;
   const setMax = () => setAmount(formatEther(maxAffordableWei));
+
+  const chainName = (network?.label || "chain").replace(" (Hardhat)", "");
+
+  // Selecting a side mirrors the coin to that face. After a settled flip, picking a side
+  // clears the result so the coin tactilely rotates to the newly chosen face.
+  function selectSide(s: Side) {
+    if (pending) return;
+    setChoice(s);
+    if (coin === "settled") {
+      setLast(null);
+      setCoin("idle");
+    }
+  }
 
   async function onFlip() {
     setError(null);
@@ -136,16 +183,24 @@ export default function GamePanel({
 
   return (
     <div className="card relative overflow-hidden p-6 shadow-2xl transition-all duration-500 hover:border-emerald-500/10">
-      {/* Balance header */}
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-white/40">Your balance</div>
-          <div className="text-2xl font-bold text-neon-green">{fmtEth(state.balance)} ETH</div>
+      {/* Micro-dashboard stats console */}
+      <div className="mb-5 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/40">
+        <div className="px-3 py-2.5">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+            <WalletIcon /> Balance
+          </div>
+          <div className="mt-0.5 font-mono text-base font-bold text-emerald-400">{fmtEth(state.balance)}</div>
         </div>
-        <div className="text-right text-xs text-white/40">
-          <div>House bankroll: {fmtEth(state.bankroll)} ETH</div>
-          <div>
-            Edge {HOUSE_EDGE} · win pays <span className="text-neon-gold">{PAYOUT_MULTIPLIER}</span>
+        <div className="px-3 py-2.5">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+            <VaultIcon /> House
+          </div>
+          <div className="mt-0.5 font-mono text-base font-bold text-white/80">{fmtEth(state.bankroll)}</div>
+        </div>
+        <div className="px-3 py-2.5">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Edge · Payout</div>
+          <div className="mt-0.5 font-mono text-base font-bold text-neon-gold">
+            {HOUSE_EDGE} · {PAYOUT_MULTIPLIER}
           </div>
         </div>
       </div>
@@ -173,35 +228,41 @@ export default function GamePanel({
               animate={{ opacity: 1 }}
               className="mt-4 animate-pulse-glow text-sm text-neon-cyan"
             >
-              Flipping on-chain… confirming transaction
+              Mining on {chainName}… confirming transaction
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Choice */}
-      <div className="mb-4 grid grid-cols-2 gap-3">
-        {([0, 1] as Side[]).map((s) => (
-          <button
-            key={s}
-            onClick={() => setChoice(s)}
-            disabled={!!pending}
-            className={`rounded-xl border-2 py-3 font-bold transition ${
-              choice === s
-                ? s === 0
-                  ? "border-neon-gold bg-neon-gold/10 text-neon-gold"
-                  : "border-neon-cyan bg-neon-cyan/10 text-neon-cyan"
-                : "border-white/10 text-white/50 hover:border-white/25"
-            }`}
-          >
-            {s === 0 ? "🪙 Heads" : "💎 Tails"}
-          </button>
-        ))}
+      <StepLabel>1. Choose your side</StepLabel>
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        {([0, 1] as Side[]).map((s) => {
+          const selected = choice === s;
+          const heads = s === 0;
+          return (
+            <button
+              key={s}
+              onClick={() => selectSide(s)}
+              disabled={!!pending}
+              className={`rounded-xl border-2 py-3 font-bold transition-all duration-300 disabled:opacity-50 ${
+                selected
+                  ? heads
+                    ? "border-emerald-400 bg-emerald-400/10 text-emerald-300 shadow-[0_0_18px_-4px_rgba(52,211,153,0.8)]"
+                    : "border-cyan-400 bg-cyan-400/10 text-cyan-300 shadow-[0_0_18px_-4px_rgba(34,211,238,0.8)]"
+                  : "border-white/10 text-white/50 hover:border-white/25"
+              }`}
+            >
+              {heads ? "◈ Heads" : "▽ Tails"}
+            </button>
+          );
+        })}
       </div>
 
       {/* Amount */}
       <div className="mb-3">
-        <div className="mb-2 flex items-center gap-2">
+        <StepLabel>2. Set your bet amount</StepLabel>
+        <div className="mb-3 flex items-center gap-2">
           <input
             type="number"
             step="0.01"
@@ -221,19 +282,33 @@ export default function GamePanel({
           </button>
           <span className="text-white/40">ETH</span>
         </div>
+        <StepLabel>Quick presets</StepLabel>
         <div className="flex gap-2">
-          {chips.map((q) => (
-            <button
-              key={q}
-              onClick={() => setAmount(q)}
-              disabled={!!pending}
-              className="flex-1 rounded-lg border border-white/10 py-1.5 text-xs text-white/60 hover:bg-white/5"
-            >
-              {q}
-            </button>
-          ))}
+          {chips.map((q, i) => {
+            const active = !!amount && Math.abs(Number(amount) - Number(q)) < 1e-12;
+            const tag = i === 0 ? "Min" : i === chips.length - 1 ? "Max" : null;
+            return (
+              <button
+                key={q}
+                onClick={() => setAmount(q)}
+                disabled={!!pending}
+                className={`flex flex-1 flex-col items-center rounded-lg border py-1.5 transition-all duration-200 disabled:opacity-50 ${
+                  active
+                    ? "border-emerald-400/60 bg-emerald-400/10 text-emerald-300 shadow-[0_0_12px_-3px_rgba(52,211,153,0.75)]"
+                    : "border-white/10 text-white/60 hover:border-white/25 hover:bg-white/5"
+                }`}
+              >
+                <span className="font-mono text-xs">{q}</span>
+                {tag && (
+                  <span className={`text-[8px] uppercase tracking-wider ${active ? "text-emerald-300/70" : "text-white/30"}`}>
+                    {tag}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-        <div className="mt-1 flex items-center justify-between text-xs">
+        <div className="mt-2 flex items-center justify-between text-xs">
           <span className="text-white/30">
             Limits: {fmtEth(state.minBet)} – {fmtEth(state.maxBet)} ETH
           </span>
@@ -273,18 +348,26 @@ export default function GamePanel({
         )}
       </AnimatePresence>
 
-      <button onClick={onFlip} disabled={!canFlip} className="btn-primary w-full text-lg">
-        {pending === "flip"
-          ? "Flipping…"
-          : lowGas
-          ? "Demo wallet out of gas"
-          : insufficientBalance
-          ? "Insufficient balance"
-          : aboveMax
-          ? "Bet above max"
-          : belowMin
-          ? "Bet below min"
-          : `Flip for ${amount || "0"} ETH`}
+      <button
+        onClick={onFlip}
+        disabled={!canFlip}
+        className={`btn-primary w-full text-lg ${pending === "flip" ? "animate-breathe" : ""}`}
+      >
+        {pending === "flip" ? (
+          <span className="inline-flex items-center gap-2">
+            <Spinner /> Mining on {chainName}…
+          </span>
+        ) : lowGas ? (
+          "Demo wallet out of gas"
+        ) : insufficientBalance ? (
+          "Insufficient balance"
+        ) : aboveMax ? (
+          "Bet above max"
+        ) : belowMin ? (
+          "Bet below min"
+        ) : (
+          `Flip for ${amount || "0"} ETH`
+        )}
       </button>
 
       {/* Banking */}
