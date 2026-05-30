@@ -1,10 +1,10 @@
 {
   "project": "Wibe — On-Chain Coin Flip Casino",
-  "current_phase": "Build/contract/deploy COMPLETE & verified — public access blocked by 1 Vercel setting",
-  "current_step": "ACTION: disable Vercel Deployment Protection so the live URL is publicly reachable (DEPLOY.md Step 4.5)",
-  "completion": "code 100% · contract live+verified 100% · frontend deployed; PUBLIC ACCESS pending Vercel Deployment-Protection toggle",
+  "current_phase": "COMPLETE — publicly live, on-chain, full loop verified on the deployed URL",
+  "current_step": "DONE. Optional: record 5-min Loom (docs/loom_script.md)",
+  "completion": "100% — contract live+verified on Sepolia; frontend public on Vercel; deposit/flip/VERIFIED/withdraw all confirmed on the live public URL with zero console errors",
   "live_url": "https://frontend-evg-s-projects.vercel.app",
-  "live_url_status": "deployed but gated behind Vercel Authentication (login wall) — disable Deployment Protection for public access",
+  "live_url_status": "PUBLIC + verified working — Instant Play resolves to Sepolia, full loop confirmed on the deployed site",
   "sepolia_contract_address": "0x4Dc741EB5D5e7491C50013228157f6427F59fd4b",
   "sepolia_explorer": "https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b",
   "game": "Coin Flip (50/50, 3.5% house edge, win pays 1.93x)",
@@ -25,14 +25,14 @@
     "mobile 390px responsive verified"
   ],
   "pending_tasks": [
-    "USER ACTION: disable Vercel Deployment Protection so the live URL is public (DEPLOY.md Step 4.5)",
-    "then verify in incognito: landing loads + Instant Play sublabel says 'Sepolia' (not localhost)",
-    "record 5-min Loom (script in docs/loom_script.md)"
+    "OPTIONAL: record 5-min Loom (script in docs/loom_script.md)",
+    "OPTIONAL: top up burner/bankroll if the public URL gets heavy traffic (scripts/configure-sepolia.js)"
   ],
   "done_tasks_final": [
     "live URL added to README + notion_submission",
     "Next.js updated to 15.5.18 (Vercel CVE block cleared); prod build verified",
-    "frontend deployed to Vercel"
+    "frontend deployed to Vercel + Deployment Protection disabled (public)",
+    "PUBLIC URL verified end-to-end: env->Sepolia, deposit/flip/VERIFIED/withdraw, no console errors"
   ],
   "completed_docs": [
     "security_review.md (5 findings, honest ratings)",
@@ -42,9 +42,7 @@
     "loom_script.md (minute-by-minute)",
     "DEPLOY.md + deploy-sepolia.sh + vercel.json"
   ],
-  "blockers": [
-    "Vercel Deployment Protection is ON -> live URL shows a Vercel login wall instead of the app. Disable it (Settings > Deployment Protection) for public access. App build itself is verified working."
-  ],
+  "blockers": [],
   "gates": [
     "PAUSE for user confirmation before real key generation and public deployment"
   ],

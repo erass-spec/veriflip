@@ -6,7 +6,7 @@ Wibe is a dark-themed, mobile-first crypto casino built around one honest idea: 
 The differentiator isn't the game — it's that the casino *proves it isn't cheating* and is honest about exactly how far that proof goes.
 
 ## Links
-- **Live demo:** https://frontend-evg-s-projects.vercel.app _(must disable Vercel Deployment Protection for public access — see below)_
+- **Live demo:** https://frontend-evg-s-projects.vercel.app — public, playable, on-chain
 - **Contract (Sepolia):** [`0x4Dc741EB5D5e7491C50013228157f6427F59fd4b`](https://sepolia.etherscan.io/address/0x4Dc741EB5D5e7491C50013228157f6427F59fd4b) — deployed, funded (0.02 ETH bankroll), full loop verified on-chain
 - **GitHub:** _<repo URL>_
 - **Loom:** _<video URL>_
