@@ -32,7 +32,12 @@
     "live URL added to README + notion_submission",
     "Next.js updated to 15.5.18 (Vercel CVE block cleared); prod build verified",
     "frontend deployed to Vercel + Deployment Protection disabled (public)",
-    "PUBLIC URL verified end-to-end: env->Sepolia, deposit/flip/VERIFIED/withdraw, no console errors"
+    "PUBLIC URL verified end-to-end: env->Sepolia, deposit/flip/VERIFIED/withdraw, no console errors",
+    "Makefile (deploy/dev/test/build/node/deploy-local); make deploy verified live",
+    "RPC resilience: viem fallback over 5 Sepolia nodes, fixed gas limits, serialized+self-healing nonce, descriptive errors",
+    "insufficient-balance revert loop FIXED: Flip disabled + inline warning when bet>balance; errors moved into game card; refreshState on failure",
+    "burner low-gas alert; stress-flip.js (5 rapid flips + revert-recover) PASSED on live Sepolia",
+    "MAX bet button = min(balance, maxBet), respects minBet — verified live"
   ],
   "completed_docs": [
     "security_review.md (5 findings, honest ratings)",
