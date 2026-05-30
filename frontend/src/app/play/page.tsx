@@ -22,7 +22,7 @@ export default function PlayPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <header className="glass mb-6 flex items-center justify-between rounded-2xl px-4 py-3">
+      <header className="sticky top-3 z-50 mb-6 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 shadow-lg backdrop-blur-md">
         <Link href="/" className="flex items-center gap-2">
           <BrandLogo />
           <span className="font-mono text-xs text-white/30">/ play</span>

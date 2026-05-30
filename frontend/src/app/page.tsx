@@ -17,9 +17,9 @@ const fade = (delay = 0) => ({
 
 export default function Landing() {
   return (
-    <main className="relative mx-auto max-w-6xl overflow-hidden px-4">
-      {/* Nav */}
-      <nav className="relative z-20 flex items-center justify-between py-5">
+    <main className="relative mx-auto max-w-6xl px-4">
+      {/* Nav — sticky floating glass bar, always above content */}
+      <nav className="sticky top-3 z-50 mb-2 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 shadow-lg backdrop-blur-md">
         <Link href="/"><BrandLogo /></Link>
         <div className="flex items-center gap-3">
           <Link href="/play" className="hidden text-sm text-white/60 hover:text-white sm:block">
@@ -29,10 +29,10 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="relative grid grid-cols-1 items-center gap-6 pb-8 pt-2 md:grid-cols-2 md:pb-12 md:pt-6">
+      {/* Hero — clips its own aurora/grid so main can host a sticky nav without horizontal overflow */}
+      <section className="relative grid grid-cols-1 items-center gap-6 overflow-hidden pb-8 pt-4 md:grid-cols-2 md:pb-12 md:pt-8">
         {/* Cyberpunk perspective mesh */}
-        <div className="perspective-grid pointer-events-none absolute -inset-x-8 -top-24 -z-20 h-[140%]" />
+        <div className="perspective-grid pointer-events-none absolute -inset-x-8 -top-10 -z-20 h-[140%]" />
         {/* Aurora glow behind the hero */}
         <div className="pointer-events-none absolute right-0 top-0 -z-10 h-80 w-80 rounded-full bg-emerald-500/20 blur-3xl" />
         <div className="pointer-events-none absolute right-10 top-24 -z-10 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
