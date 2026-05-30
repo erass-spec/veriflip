@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import { AnimatePresence, motion } from "framer-motion";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
 import { fmtEth, friendlyError } from "@/lib/format";
 import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
 import CoinAnimation from "./CoinAnimation";
+
+// Below this native-ETH balance the burner can't reliably cover another tx's gas.
+const LOW_GAS_WEI = parseEther("0.0015");
 
 // Trim float noise to a clean, parseable decimal string.
 const trim = (n: number) => parseFloat(n.toFixed(8)).toString();
@@ -19,8 +22,8 @@ export default function GamePanel({
   api: ReturnType<typeof useGame>;
   onSettled: (g: GameRow) => void;
 }) {
-  const { account, network } = useWallet();
-  const { state, deposit, withdraw, flip } = api;
+  const { account, network, mode } = useWallet();
+  const { state, deposit, withdraw, flip, refreshState } = api;
   const [choice, setChoice] = useState<Side>(0);
   const [amount, setAmount] = useState("");
   const [coin, setCoin] = useState<"idle" | "spinning" | "settled">("idle");
@@ -51,12 +54,26 @@ export default function GamePanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minEth, maxEth]);
 
+  // --- Bet validation (drives the disabled Flip button + inline warnings). All checks
+  // mirror the contract's require()s so a bet can never be sent that would revert. ---
+  let betWei: bigint | null = null;
+  try {
+    if (amount && Number(amount) > 0) betWei = parseEther(amount as `${number}`);
+  } catch {
+    betWei = null;
+  }
+  const invalidAmount = betWei === null;
+  const insufficientBalance = betWei !== null && betWei > state.balance;
+  const belowMin = betWei !== null && state.minBet > 0n && betWei < state.minBet;
+  const aboveMax = betWei !== null && state.maxBet > 0n && betWei > state.maxBet;
+  // Burner-only: native ETH too low to pay gas for another flip.
+  const lowGas = mode === "mock" && state.gas > 0n && state.gas < LOW_GAS_WEI;
+  const canFlip = !pending && !invalidAmount && !insufficientBalance && !belowMin && !aboveMax && !lowGas;
+
   async function onFlip() {
     setError(null);
-    const amt = Number(amount);
-    if (!amt || amt <= 0) return setError("Enter a bet amount.");
-    if (parseFloat(amount) > Number(fmtEth(state.balance, 18)))
-      return setError("Not enough balance — deposit more to play.");
+    // Defensive: the button is disabled in these states, but never send a doomed tx.
+    if (!canFlip) return;
     setPending("flip");
     setLast(null);
     setCoin("spinning");
@@ -69,6 +86,8 @@ export default function GamePanel({
       console.error("[wibe] flip failed —", (e as any)?.shortMessage || (e as any)?.details || (e as any)?.message, e);
       setCoin("idle");
       setError(friendlyError(e));
+      // Re-sync on failure so a stale balance/nonce can't cause a repeat-revert loop.
+      refreshState();
     } finally {
       setPending(null);
     }
@@ -84,6 +103,7 @@ export default function GamePanel({
     } catch (e) {
       console.error("[wibe] bank tx failed —", (e as any)?.shortMessage || (e as any)?.message, e);
       setError(friendlyError(e));
+      refreshState();
     } finally {
       setPending(null);
     }
@@ -200,13 +220,58 @@ export default function GamePanel({
             </button>
           ))}
         </div>
-        <div className="mt-1 text-xs text-white/30">
-          Limits: {fmtEth(state.minBet)} – {fmtEth(state.maxBet)} ETH
+        <div className="mt-1 flex items-center justify-between text-xs">
+          <span className="text-white/30">
+            Limits: {fmtEth(state.minBet)} – {fmtEth(state.maxBet)} ETH
+          </span>
+          {insufficientBalance ? (
+            <span className="font-semibold text-red-400">⚠ Insufficient balance</span>
+          ) : aboveMax ? (
+            <span className="font-semibold text-red-400">⚠ Above max bet</span>
+          ) : belowMin ? (
+            <span className="font-semibold text-red-400">⚠ Below min bet</span>
+          ) : null}
         </div>
       </div>
 
-      <button onClick={onFlip} disabled={!!pending} className="btn-primary w-full text-lg">
-        {pending === "flip" ? "Flipping…" : `Flip for ${amount || "0"} ETH`}
+      {/* Inline alerts — kept right by the action so they're seen without scrolling */}
+      <AnimatePresence>
+        {lowGas && (
+          <motion.div
+            key="lowgas"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+          >
+            ⛽ Demo burner wallet is out of gas. Please import your own wallet (🦊 Browser Wallet) or wait for a top-up.
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            key="err"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <button onClick={onFlip} disabled={!canFlip} className="btn-primary w-full text-lg">
+        {pending === "flip"
+          ? "Flipping…"
+          : lowGas
+          ? "Demo wallet out of gas"
+          : insufficientBalance
+          ? "Insufficient balance"
+          : aboveMax
+          ? "Bet above max"
+          : belowMin
+          ? "Bet below min"
+          : `Flip for ${amount || "0"} ETH`}
       </button>
 
       {/* Banking */}
@@ -239,19 +304,6 @@ export default function GamePanel({
           </button>
         </div>
       </div>
-
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

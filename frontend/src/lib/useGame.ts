@@ -21,14 +21,15 @@ export interface GameRow {
 }
 
 export interface ChainState {
-  balance: bigint;
+  balance: bigint; // withdrawable in-contract game balance
   bankroll: bigint;
   minBet: bigint;
   maxBet: bigint;
   totalFlips: bigint;
+  gas: bigint; // the wallet's native ETH (pays gas) — used to warn when the burner is dry
 }
 
-const EMPTY: ChainState = { balance: 0n, bankroll: 0n, minBet: 0n, maxBet: 0n, totalFlips: 0n };
+const EMPTY: ChainState = { balance: 0n, bankroll: 0n, minBet: 0n, maxBet: 0n, totalFlips: 0n, gas: 0n };
 
 function randomSeed(): `0x${string}` {
   const bytes = new Uint8Array(32);
@@ -98,14 +99,15 @@ export function useGame() {
   const refreshState = useCallback(async () => {
     if (!publicClient || !address || !account) return;
     try {
-      const [balance, bankroll, minBet, maxBet, totalFlips] = (await Promise.all([
+      const [balance, bankroll, minBet, maxBet, totalFlips, gas] = (await Promise.all([
         publicClient.readContract({ address, abi: coinFlipAbi, functionName: "balances", args: [account] }),
         publicClient.readContract({ address, abi: coinFlipAbi, functionName: "houseBankroll" }),
         publicClient.readContract({ address, abi: coinFlipAbi, functionName: "minBet" }),
         publicClient.readContract({ address, abi: coinFlipAbi, functionName: "maxBet" }),
         publicClient.readContract({ address, abi: coinFlipAbi, functionName: "totalFlips" }),
+        publicClient.getBalance({ address: account }),
       ])) as bigint[];
-      setState({ balance, bankroll, minBet, maxBet, totalFlips });
+      setState({ balance, bankroll, minBet, maxBet, totalFlips, gas });
     } catch {
       /* leave prior state; UI surfaces connection errors elsewhere */
     }
