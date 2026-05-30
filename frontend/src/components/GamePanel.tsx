@@ -70,6 +70,11 @@ export default function GamePanel({
   const lowGas = mode === "mock" && state.gas > 0n && state.gas < LOW_GAS_WEI;
   const canFlip = !pending && !invalidAmount && !insufficientBalance && !belowMin && !aboveMax && !lowGas;
 
+  // "Max" = the largest in-range bet you can afford: min(balance, maxBet).
+  const maxAffordableWei = state.balance < state.maxBet ? state.balance : state.maxBet;
+  const canMax = !pending && maxAffordableWei >= state.minBet && maxAffordableWei > 0n;
+  const setMax = () => setAmount(formatEther(maxAffordableWei));
+
   async function onFlip() {
     setError(null);
     // Defensive: the button is disabled in these states, but never send a doomed tx.
@@ -206,6 +211,14 @@ export default function GamePanel({
             disabled={!!pending}
             className="w-full rounded-xl border border-white/10 bg-ink-900/60 px-4 py-3 font-mono text-lg outline-none focus:border-neon-green/50"
           />
+          <button
+            onClick={setMax}
+            disabled={!canMax}
+            title="Bet the most you can: min(balance, max bet)"
+            className="rounded-xl border border-neon-cyan/40 px-3 py-3 text-xs font-bold text-neon-cyan transition hover:bg-neon-cyan/10 disabled:opacity-40"
+          >
+            MAX
+          </button>
           <span className="text-white/40">ETH</span>
         </div>
         <div className="flex gap-2">
