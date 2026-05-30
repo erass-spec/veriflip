@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import HeroCoin from "@/components/HeroCoin";
 import LiveFeed from "@/components/LiveFeed";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { HOUSE_EDGE, PAYOUT_MULTIPLIER } from "@/lib/contract";
 
 const fade = (delay = 0) => ({
@@ -192,9 +193,7 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      <footer className="relative border-t border-white/10 py-6 text-center text-sm text-white/30">
-        VeriFlip · on-chain coin flip · built for the hackathon · play responsibly, testnet only.
-      </footer>
+      <Footer />
     </main>
   );
 }

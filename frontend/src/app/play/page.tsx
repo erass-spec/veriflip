@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import GamePanel from "@/components/GamePanel";
 import VerifyPanel from "@/components/VerifyPanel";
 import RecentGames from "@/components/RecentGames";
+import Footer from "@/components/Footer";
 
 export default function PlayPage() {
   const { account, error, clearError } = useWallet();
@@ -49,6 +50,8 @@ export default function PlayPage() {
           )}
         </div>
       </div>
+
+      <Footer />
     </main>
   );
 }
