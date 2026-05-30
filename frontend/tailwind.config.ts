@@ -58,6 +58,10 @@ const config: Config = {
           "50%": { opacity: "1" },
           "100%": { opacity: "0.25", transform: "translateX(3px)" },
         },
+        blink: {
+          "0%,49%": { opacity: "1" },
+          "50%,100%": { opacity: "0" },
+        },
         float: {
           "0%,100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
@@ -75,6 +79,7 @@ const config: Config = {
         "breathe-cyan": "breathe-cyan 2.2s ease-in-out infinite",
         "breathe-violet": "breathe-violet 2.2s ease-in-out infinite",
         "flow-right": "flow-right 1.4s ease-in-out infinite",
+        blink: "blink 1.1s step-end infinite",
         float: "float 3.6s ease-in-out infinite",
         "badge-pulse": "badge-pulse 2.4s ease-in-out infinite",
       },

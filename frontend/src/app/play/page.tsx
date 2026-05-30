@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
+import { fmtEth } from "@/lib/format";
 import Navbar from "@/components/Navbar";
 import GamePanel from "@/components/GamePanel";
 import VerifyPanel from "@/components/VerifyPanel";
@@ -40,12 +41,25 @@ export default function PlayPage() {
         <div className="space-y-6">
           <RecentGames games={api.games} onSelect={(g) => setSelected(g)} />
           {account && (
-            <div className="card p-4 text-xs text-white/40">
-              <div className="mb-2 font-semibold text-white/60">This session</div>
-              Total flips on contract: {api.state.totalFlips.toString()}
-              <div className="mt-2">
-                Pick a row in <b>Recent Flips</b> to re-verify any past outcome.
+            <div className="card p-4">
+              <div className="mb-3 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-white/50">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+                System diagnostics
               </div>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 font-mono text-xs">
+                <dt className="text-white/40">total_flips</dt>
+                <dd className="text-right text-emerald-300">{api.state.totalFlips.toString()}</dd>
+                <dt className="text-white/40">house_pool</dt>
+                <dd className="text-right text-white/80">{fmtEth(api.state.bankroll)} ETH</dd>
+                <dt className="text-white/40">bet_range</dt>
+                <dd className="text-right text-white/80">
+                  {fmtEth(api.state.minBet)}–{fmtEth(api.state.maxBet)}
+                </dd>
+              </dl>
+              <p className="mt-3 text-xs leading-relaxed text-white/40">
+                Pick a row in <b className="text-white/60">Recent Flips</b> to re-verify any past outcome.{" "}
+                <span className="animate-blink font-mono text-emerald-400">_</span>
+              </p>
             </div>
           )}
         </div>
