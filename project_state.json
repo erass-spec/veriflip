@@ -1,0 +1,46 @@
+{
+  "project": "Wibe — On-Chain Coin Flip Casino",
+  "current_phase": "PHASE I — Local Development & Verification",
+  "current_step": "Step 3 — Local Deploy & ABI Export",
+  "game": "Coin Flip (50/50, 3.5% house edge, win pays 1.93x)",
+  "randomness": "single-tx block.prevrandao + player seed + per-player nonce; recomputable on-chain; validator-influence limit documented in security_review.md",
+  "completed_tasks": [
+    "git init",
+    "repo structure (contracts, scripts, test, frontend, deployments, docs)",
+    ".gitignore with .env protection",
+    "verified Hardhat toolchain compiles + tests on Node 25 (viaIR enabled for 10-field event)",
+    "wrote CoinFlip contract (Ownable + ReentrancyGuard + liquidity guard)",
+    "wrote unit tests: 16 passing, 97% stmts / 81% branch / 98% lines coverage",
+    "provable-fairness verified: off-chain recompute matches contract for both win+loss"
+  ],
+  "pending_tasks": [
+    "local node deploy + ABI export",
+    "frontend landing + game UI",
+    "mock wallet mode",
+    "sepolia deploy scaffolding",
+    "public frontend deploy",
+    "security review",
+    "judge scoring sim",
+    "submission docs"
+  ],
+  "blockers": [],
+  "gates": [
+    "PAUSE for user confirmation before real key generation and public deployment"
+  ],
+  "local_deployer_address": "",
+  "sepolia_deployer_address": "",
+  "contracts": {
+    "CoinFlip": {
+      "compiler": "0.8.24",
+      "viaIR": true,
+      "payout_bps": 19300,
+      "house_edge": "3.5%",
+      "tests_passing": 16,
+      "coverage": { "statements": "97.06%", "branch": "80.95%", "lines": "98.08%", "functions": "90.91%" }
+    }
+  },
+  "frontend": {},
+  "qa": {
+    "toolchain": "verified on Node 25.6.1 (Hardhat warns but works; viaIR pipeline)"
+  }
+}
