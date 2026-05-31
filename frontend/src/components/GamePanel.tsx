@@ -53,6 +53,53 @@ function StepLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Glowing gold coin (Heads) + cyan crystal (Tails) button icons.
+function CoinFace() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="drop-shadow-[0_0_5px_rgba(255,210,63,0.9)]" aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="#ffd23f" stroke="#fff3c4" strokeWidth="1.4" />
+      <circle cx="12" cy="12" r="5" fill="none" stroke="#a9760f" strokeWidth="1.2" strokeOpacity="0.6" />
+    </svg>
+  );
+}
+function DiamondFace() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" className="drop-shadow-[0_0_5px_rgba(34,211,238,0.9)]" aria-hidden>
+      <path d="M12 3 L20 10 L12 21 L4 10 Z" fill="#22d3ee" stroke="#a5f3fc" strokeWidth="1.2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// State-aware ambient glow behind the coin. Keyed per state so transitions remount cleanly
+// (idle breathing cyan, flipping fast amber, win bright→halo, loss dim red fade).
+type GlowState = "idle" | "flipping" | "win" | "loss";
+const GLOW: Record<GlowState, { color: string; initial: Record<string, unknown>; animate: Record<string, unknown>; transition: Record<string, unknown> }> = {
+  idle: {
+    color: "bg-cyan-500/25",
+    initial: { opacity: 0.5, scale: 1 },
+    animate: { opacity: [0.4, 0.7, 0.4], scale: [1, 1.06, 1] },
+    transition: { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
+  },
+  flipping: {
+    color: "bg-amber-400/30",
+    initial: { opacity: 0.6, scale: 1 },
+    animate: { opacity: [0.5, 0.95, 0.5], scale: [1, 1.13, 1] },
+    transition: { duration: 0.85, repeat: Infinity, ease: "easeInOut" },
+  },
+  win: {
+    color: "bg-emerald-500/35",
+    initial: { opacity: 1, scale: 1.4 },
+    animate: { opacity: 0.6, scale: 1 },
+    transition: { duration: 0.8, ease: "easeOut" },
+  },
+  loss: {
+    color: "bg-red-800/30",
+    initial: { opacity: 0.55, scale: 1.12 },
+    animate: { opacity: 0.3, scale: 1 },
+    transition: { duration: 1.0, ease: "easeOut" },
+  },
+};
+
 export default function GamePanel({
   api,
   onSettled,
@@ -193,9 +240,21 @@ export default function GamePanel({
   }
 
   const won = last?.won;
+  const glowState: GlowState = coin === "spinning" ? "flipping" : coin === "settled" ? (won ? "win" : "loss") : "idle";
+  const glow = GLOW[glowState];
 
   return (
-    <div className="card relative overflow-hidden p-6 shadow-2xl transition-all duration-500 hover:border-emerald-500/10">
+    <div className="card relative overflow-hidden bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-6 shadow-2xl transition-all duration-500 [background-size:20px_20px] hover:border-emerald-500/10">
+      {/* Tactical corner brackets */}
+      <span aria-hidden className="pointer-events-none absolute left-2 top-2 z-10 h-3.5 w-3.5 border-l-2 border-t-2 border-emerald-400/50 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+      <span aria-hidden className="pointer-events-none absolute right-2 top-2 z-10 h-3.5 w-3.5 border-r-2 border-t-2 border-cyan-400/40" />
+      <span aria-hidden className="pointer-events-none absolute bottom-2 left-2 z-10 h-3.5 w-3.5 border-b-2 border-l-2 border-cyan-400/40" />
+      <span aria-hidden className="pointer-events-none absolute bottom-2 right-2 z-10 h-3.5 w-3.5 border-b-2 border-r-2 border-emerald-400/50 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
+      {/* System status decal */}
+      <span aria-hidden className="pointer-events-none absolute left-7 top-[7px] z-10 font-mono text-[7px] uppercase tracking-[0.22em] text-white/20">
+        VERIFLIP_SYSTEM_v1.20 // STATUS: OPERATIONAL
+      </span>
+
       {/* Mute toggle — floats in the top-right corner, doesn't reflow the grid */}
       <button
         onClick={toggleMute}
@@ -229,7 +288,16 @@ export default function GamePanel({
       </div>
 
       {/* Coin */}
-      <div className="relative mb-6 flex flex-col items-center">
+      <div className="relative isolate mb-6 flex flex-col items-center">
+        {/* State-aware ambient glow engine */}
+        <motion.div
+          key={glowState}
+          aria-hidden
+          initial={glow.initial as any}
+          animate={glow.animate as any}
+          transition={glow.transition as any}
+          className={`pointer-events-none absolute left-1/2 top-1/2 -z-10 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl ${glow.color}`}
+        />
         <div className="[perspective:800px]" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
           <motion.div style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}>
             <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={200} />
@@ -304,7 +372,10 @@ export default function GamePanel({
                   : "border-white/10 text-white/50 hover:border-white/25"
               }`}
             >
-              {heads ? "◈ Heads" : "▽ Tails"}
+              <span className="inline-flex items-center justify-center gap-2">
+                {heads ? <CoinFace /> : <DiamondFace />}
+                {heads ? "Heads" : "Tails"}
+              </span>
             </button>
           );
         })}
