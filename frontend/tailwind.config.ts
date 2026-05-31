@@ -62,6 +62,18 @@ const config: Config = {
           "0%,49%": { opacity: "1" },
           "50%,100%": { opacity: "0" },
         },
+        // Gentle neon-blue/emerald outer glow that lifts the card off the dark page
+        // (a constant dark depth layer keeps the 3D drop, the neon layers breathe).
+        "float-glow": {
+          "0%,100%": {
+            boxShadow:
+              "0 20px 55px -12px rgba(0,0,0,0.75), 0 0 40px rgba(16,185,129,0.07), 0 0 75px rgba(59,130,246,0.04)",
+          },
+          "50%": {
+            boxShadow:
+              "0 20px 55px -12px rgba(0,0,0,0.75), 0 0 62px rgba(16,185,129,0.13), 0 0 105px rgba(59,130,246,0.08)",
+          },
+        },
         float: {
           "0%,100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
@@ -79,6 +91,7 @@ const config: Config = {
         "breathe-cyan": "breathe-cyan 2.2s ease-in-out infinite",
         "breathe-violet": "breathe-violet 2.2s ease-in-out infinite",
         "flow-right": "flow-right 1.4s ease-in-out infinite",
+        "float-glow": "float-glow 4.5s ease-in-out infinite",
         blink: "blink 1.1s step-end infinite",
         float: "float 3.6s ease-in-out infinite",
         "badge-pulse": "badge-pulse 2.4s ease-in-out infinite",

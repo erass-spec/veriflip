@@ -70,6 +70,45 @@ function DiamondFace() {
   );
 }
 
+// Futuristic "radar/scope" chamber that sits behind the coin — concentric dashed rings
+// rotate at different speeds/directions so the coin reads as suspended in a cryptographic
+// magnetic field. Pure decoration (aria-hidden); rotation is CSS so it never re-renders.
+// `transformBox: fill-box` makes each ring spin about its own centre inside the SVG.
+function RadarScope() {
+  const spin = { transformBox: "fill-box", transformOrigin: "center" } as const;
+  return (
+    <svg
+      viewBox="0 0 200 200"
+      aria-hidden
+      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[290px] w-[290px] -translate-x-1/2 -translate-y-1/2 opacity-50"
+    >
+      {/* faint static rings + radial scan grid */}
+      <circle cx="100" cy="100" r="94" fill="none" stroke="#22d3ee" strokeWidth="0.4" strokeOpacity="0.18" />
+      <circle cx="100" cy="100" r="58" fill="none" stroke="#34d399" strokeWidth="0.4" strokeOpacity="0.14" />
+      <circle cx="100" cy="100" r="30" fill="none" stroke="#22d3ee" strokeWidth="0.4" strokeOpacity="0.12" />
+      {/* rotating dashed scope rings */}
+      <g style={spin} className="[animation:spin_22s_linear_infinite]">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#22d3ee" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="2 9" />
+      </g>
+      <g style={spin} className="[animation:spin_15s_linear_infinite_reverse]">
+        <circle cx="100" cy="100" r="72" fill="none" stroke="#34d399" strokeWidth="1" strokeOpacity="0.32" strokeDasharray="1 7" />
+      </g>
+      <g style={spin} className="[animation:spin_30s_linear_infinite]">
+        <circle cx="100" cy="100" r="46" fill="none" stroke="#22d3ee" strokeWidth="0.8" strokeOpacity="0.28" strokeDasharray="5 11" />
+      </g>
+      {/* edge crosshair ticks */}
+      {[
+        [100, 6, 100, 18],
+        [100, 182, 100, 194],
+        [6, 100, 18, 100],
+        [182, 100, 194, 100],
+      ].map(([x1, y1, x2, y2], i) => (
+        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#22d3ee" strokeWidth="0.8" strokeOpacity="0.3" />
+      ))}
+    </svg>
+  );
+}
+
 // State-aware ambient glow behind the coin. Keyed per state so transitions remount cleanly
 // (idle breathing cyan, flipping fast amber, win bright→halo, loss dim red fade).
 type GlowState = "idle" | "flipping" | "win" | "loss";
@@ -244,47 +283,38 @@ export default function GamePanel({
   const glow = GLOW[glowState];
 
   return (
-    <div className="card relative overflow-hidden bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-6 shadow-2xl transition-all duration-500 [background-size:20px_20px] hover:border-emerald-500/10">
-      {/* Tactical corner brackets */}
-      <span aria-hidden className="pointer-events-none absolute left-2 top-2 z-10 h-3.5 w-3.5 border-l-2 border-t-2 border-emerald-400/50 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-      <span aria-hidden className="pointer-events-none absolute right-2 top-2 z-10 h-3.5 w-3.5 border-r-2 border-t-2 border-cyan-400/40" />
-      <span aria-hidden className="pointer-events-none absolute bottom-2 left-2 z-10 h-3.5 w-3.5 border-b-2 border-l-2 border-cyan-400/40" />
-      <span aria-hidden className="pointer-events-none absolute bottom-2 right-2 z-10 h-3.5 w-3.5 border-b-2 border-r-2 border-emerald-400/50 shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
-      {/* System status decal */}
-      <span aria-hidden className="pointer-events-none absolute left-7 top-[7px] z-10 font-mono text-[7px] uppercase tracking-[0.22em] text-white/20">
-        VERIFLIP_SYSTEM_v1.20 // STATUS: OPERATIONAL
-      </span>
-
-      {/* Mute toggle — floats in the top-right corner, doesn't reflow the grid */}
-      <button
-        onClick={toggleMute}
-        title={muted ? "Unmute sound effects" : "Mute sound effects"}
-        aria-label={muted ? "Unmute" : "Mute"}
-        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-slate-950/70 text-sm backdrop-blur transition hover:bg-white/10"
-      >
-        {muted ? "🔇" : "🔊"}
-      </button>
-
-      {/* Micro-dashboard stats console */}
-      <div className="mb-5 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/40">
-        <div className="px-3 py-2.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
-            <WalletIcon /> Balance
+    <div className="card relative overflow-hidden border border-white/10 bg-slate-900/60 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-6 backdrop-blur-xl animate-float-glow transition-all duration-500 [background-size:20px_20px]">
+      {/* Micro-dashboard stats console + integrated mute control */}
+      <div className="mb-5 flex items-stretch gap-2">
+        <div className="grid flex-1 grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/40">
+          <div className="px-3 py-2.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+              <WalletIcon /> Balance
+            </div>
+            <div className="mt-0.5 font-mono text-base font-bold text-emerald-400">{fmtEth6(state.balance)}</div>
           </div>
-          <div className="mt-0.5 font-mono text-base font-bold text-emerald-400">{fmtEth6(state.balance)}</div>
-        </div>
-        <div className="px-3 py-2.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
-            <VaultIcon /> House
+          <div className="px-3 py-2.5">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+              <VaultIcon /> House
+            </div>
+            <div className="mt-0.5 font-mono text-base font-bold text-white/80">{fmtEth6(state.bankroll)}</div>
           </div>
-          <div className="mt-0.5 font-mono text-base font-bold text-white/80">{fmtEth6(state.bankroll)}</div>
-        </div>
-        <div className="px-3 py-2.5">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Edge · Payout</div>
-          <div className="mt-0.5 font-mono text-base font-bold text-neon-gold">
-            {HOUSE_EDGE} · {PAYOUT_MULTIPLIER}
+          <div className="px-3 py-2.5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Edge · Payout</div>
+            <div className="mt-0.5 font-mono text-base font-bold text-neon-gold">
+              {HOUSE_EDGE} · {PAYOUT_MULTIPLIER}
+            </div>
           </div>
         </div>
+        {/* Mute — a clean circular console setting, vertically centered against the stats bar */}
+        <button
+          onClick={toggleMute}
+          title={muted ? "Unmute sound effects" : "Mute sound effects"}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="flex h-10 w-10 shrink-0 self-center items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm backdrop-blur transition hover:bg-white/10 hover:shadow-[0_0_14px_-2px_rgba(34,211,238,0.6)]"
+        >
+          {muted ? "🔇" : "🔊"}
+        </button>
       </div>
 
       {/* Coin */}
@@ -298,6 +328,8 @@ export default function GamePanel({
           transition={glow.transition as any}
           className={`pointer-events-none absolute left-1/2 top-1/2 -z-10 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl ${glow.color}`}
         />
+        {/* Crisp radar/scope chamber sits above the soft glow, behind the coin */}
+        <RadarScope />
         <div className="[perspective:800px]" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
           <motion.div style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}>
             <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={200} />
