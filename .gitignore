@@ -15,3 +15,7 @@ typechain-types
 
 # Dev verification screenshots (not part of the submission)
 docs/shot-*.png
+
+# Editor / harness runtime (local only)
+.idea/
+.claude/
