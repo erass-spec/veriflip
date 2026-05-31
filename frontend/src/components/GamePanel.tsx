@@ -46,7 +46,7 @@ function WalletIcon() {
 // Small uppercase step label that guides the player through the flow.
 function StepLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">{children}</div>
+    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40 md:mb-2">{children}</div>
   );
 }
 
@@ -77,7 +77,7 @@ function RadarScope() {
     <svg
       viewBox="0 0 200 200"
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[232px] w-[232px] -translate-x-1/2 -translate-y-1/2 opacity-50"
+      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[165px] w-[165px] -translate-x-1/2 -translate-y-1/2 opacity-50 md:h-[232px] md:w-[232px]"
     >
       {/* faint static rings + radial scan grid */}
       <circle cx="100" cy="100" r="94" fill="none" stroke="#22d3ee" strokeWidth="0.4" strokeOpacity="0.18" />
@@ -317,10 +317,10 @@ export default function GamePanel({
   const glow = GLOW[glowState];
 
   return (
-    <div className="card relative overflow-hidden border border-white/10 bg-slate-900/60 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-6 backdrop-blur-xl animate-float-glow transition-all duration-500 [background-size:20px_20px]">
+    <div className="card relative overflow-hidden border border-white/10 bg-slate-900/60 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-4 backdrop-blur-xl animate-float-glow transition-all duration-500 [background-size:20px_20px] md:p-8">
       {/* Self-contained dashboard HUD — game balance · status badge · mute. The "house" and
           "edge·payout" metadata lives on the landing/diagnostics; here we keep the player focused. */}
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3">
+      <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 md:mb-5">
         {/* Left: the in-contract (game) balance, clearly distinguished from the wallet balance */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
@@ -347,10 +347,10 @@ export default function GamePanel({
 
       {/* Coin + status — STRICT fixed height so the controls below never shift (zero CLS).
           Idle, spinning, win and loss all occupy exactly the same vertical space. */}
-      <div className="relative mb-6 mt-1 flex h-[280px] flex-col items-center">
+      <div className="relative mb-3 mt-1 flex h-[185px] flex-col items-center md:mb-6 md:h-[280px]">
         {/* Fixed-size chamber viewport — the radar is fully contained here, so it can never
-            bleed up into the HUD bar regardless of the coin/status state. */}
-        <div className="relative isolate flex h-[240px] w-[240px] items-center justify-center">
+            bleed up into the HUD bar regardless of the coin/status state. Compacts on mobile. */}
+        <div className="relative isolate flex h-[172px] w-[172px] items-center justify-center md:h-[240px] md:w-[240px]">
           {/* State-aware ambient glow engine */}
           <motion.div
             key={glowState}
@@ -358,11 +358,11 @@ export default function GamePanel({
             initial={glow.initial as any}
             animate={glow.animate as any}
             transition={glow.transition as any}
-            className={`pointer-events-none absolute left-1/2 top-1/2 -z-10 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl ${glow.color}`}
+            className={`pointer-events-none absolute left-1/2 top-1/2 -z-10 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl md:h-44 md:w-44 ${glow.color}`}
           />
           {/* Crisp radar/scope chamber sits above the soft glow, behind the coin */}
           <RadarScope />
-          <div className="[perspective:800px]" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
+          <div className="scale-[0.78] [perspective:800px] md:scale-100" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
             <motion.div style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}>
               <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={168} />
             </motion.div>
@@ -379,7 +379,7 @@ export default function GamePanel({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className={`pointer-events-none absolute left-1/2 top-[170px] -translate-x-1/2 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-bold backdrop-blur-md ${
+              className={`pointer-events-none absolute left-1/2 top-[108px] -translate-x-1/2 whitespace-nowrap md:top-[170px] rounded-full border px-5 py-2 text-sm font-bold backdrop-blur-md ${
                 won
                   ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-200 shadow-[0_0_26px_-4px_rgba(52,211,153,0.85)]"
                   : "border-white/15 bg-slate-900/70 text-white/70 shadow-lg"
@@ -395,7 +395,7 @@ export default function GamePanel({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="pointer-events-none absolute left-1/2 top-[170px] -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-400/30 bg-slate-900/70 px-5 py-2 text-xs font-medium text-cyan-200 shadow-[0_0_20px_-6px_rgba(34,211,238,0.7)] backdrop-blur-md"
+              className="pointer-events-none absolute left-1/2 top-[108px] -translate-x-1/2 whitespace-nowrap md:top-[170px] rounded-full border border-cyan-400/30 bg-slate-900/70 px-5 py-2 text-xs font-medium text-cyan-200 shadow-[0_0_20px_-6px_rgba(34,211,238,0.7)] backdrop-blur-md"
             >
               <span className="animate-pulse-glow">Mining on {chainName}… confirming transaction</span>
             </motion.div>
@@ -406,7 +406,7 @@ export default function GamePanel({
       {/* Session tracker — ALWAYS rendered at a fixed height so it never collapses/shifts.
           5 fixed slots: hollow placeholders until filled, then fade-in W/L dots. The streak
           badge is absolutely positioned in a reserved slot so it never nudges the dots. */}
-      <div className="relative mb-5 flex h-8 items-center justify-center" title="Your last 5 flips this session">
+      <div className="relative mb-3 flex h-8 items-center justify-center md:mb-5" title="Your last 5 flips this session">
         <div className="flex items-center gap-1.5">
           {Array.from({ length: 5 }).map((_, i) => {
             const played = i < history.length;
@@ -446,7 +446,7 @@ export default function GamePanel({
 
       {/* Choice */}
       <StepLabel>1. Choose your side</StepLabel>
-      <div className="mb-5 grid grid-cols-2 gap-3">
+      <div className="mb-3 grid grid-cols-2 gap-3 md:mb-5">
         {([0, 1] as Side[]).map((s) => {
           const selected = choice === s;
           const heads = s === 0;
@@ -475,7 +475,7 @@ export default function GamePanel({
       {/* Amount */}
       <div className="mb-3">
         <StepLabel>2. Set your bet amount</StepLabel>
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-2 flex items-center gap-2 md:mb-3">
           <input
             type="text"
             inputMode="decimal"
