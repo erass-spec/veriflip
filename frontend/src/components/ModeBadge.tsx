@@ -16,7 +16,7 @@ export default function ModeBadge() {
           : "animate-breathe-cyan border-cyan-400/50 bg-cyan-400/10 text-cyan-200"
       }`}
     >
-      {demo ? "⚡ Demo Mode" : "🦊 MetaMask"}
+      {demo ? "⚡ Demo Mode" : "🔗 Personal Wallet"}
     </span>
   );
 }

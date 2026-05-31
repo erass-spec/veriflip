@@ -6,28 +6,11 @@ import { fmtEth6, shortAddr } from "@/lib/format";
 import { sideLabel } from "@/lib/fair";
 import { useConnectivity, type ConnStatus } from "@/lib/useConnectivity";
 
-// Per-kind terminal styling for the banking rows (matches the Vault deposit/withdraw themes).
+// Banking rows are deliberately muted — passive, low-contrast system-log entries that sit
+// behind the gameplay. Everything is slate-gray except a subtly-tinted (no-glow) amount.
 const BANK_UI = {
-  deposit: {
-    icon: "📥",
-    label: "DEPOSIT",
-    sign: "+",
-    prompt: "text-cyan-400",
-    iconBox: "bg-cyan-400/15 text-cyan-300",
-    accent: "text-cyan-300",
-    glow: "[text-shadow:0_0_8px_rgba(34,211,238,0.75)]",
-    flash: "rgba(34,211,238,0.20)",
-  },
-  withdraw: {
-    icon: "📤",
-    label: "WITHDRAWAL",
-    sign: "−",
-    prompt: "text-violet-400",
-    iconBox: "bg-violet-400/15 text-violet-300",
-    accent: "text-violet-300",
-    glow: "[text-shadow:0_0_8px_rgba(139,92,246,0.75)]",
-    flash: "rgba(139,92,246,0.20)",
-  },
+  deposit: { icon: "📥", label: "DEPOSIT", sign: "+", amount: "text-cyan-400/70", flash: "rgba(34,211,238,0.07)" },
+  withdraw: { icon: "📤", label: "WITHDRAWAL", sign: "−", amount: "text-violet-400/70", flash: "rgba(139,92,246,0.07)" },
 } as const;
 
 const ROW = "flex w-full items-center gap-2.5 border-b border-white/5 px-4 py-2.5 text-left text-xs";
@@ -92,7 +75,7 @@ function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }
       {...ANIM}
       initial={{ opacity: 0, y: -14, backgroundColor: "rgba(52,211,153,0.18)" }}
       onClick={() => onSelect?.(g)}
-      className={ROW}
+      className={`${ROW} transition-colors hover:bg-white/[0.04]`}
     >
       <span className={g.won ? "text-emerald-400" : "text-white/30"}>{">"}</span>
       <span
@@ -116,17 +99,18 @@ function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }
 
 function BankRow({ e }: { e: Extract<LedgerEntry, { kind: "deposit" | "withdraw" }> }) {
   const ui = BANK_UI[e.kind];
-  // Banking rows aren't recomputable, so they're non-interactive (a div, not a button).
+  // Banking rows aren't recomputable → non-interactive (a div, not a button) and static on
+  // hover. Muted slate everywhere except the lightly-tinted amount, so they recede.
   return (
     <motion.div {...ANIM} initial={{ opacity: 0, y: -14, backgroundColor: ui.flash }} className={`${ROW} cursor-default`}>
-      <span className={ui.prompt}>{">"}</span>
-      <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded text-[11px] ${ui.iconBox}`}>
+      <span className="text-slate-600">{">"}</span>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/5 text-[11px] opacity-60 grayscale">
         {ui.icon}
       </span>
-      <span className="text-cyan-300/80">{shortAddr(e.player)}</span>
-      <span className={`font-semibold tracking-wide ${ui.accent} ${ui.glow}`}>{ui.label}</span>
-      <span className="ml-auto shrink-0 text-white/30">#{e.txHash.slice(2, 6)}</span>
-      <span className={`shrink-0 font-semibold ${ui.accent} ${ui.glow}`}>
+      <span className="text-slate-500">{shortAddr(e.player)}</span>
+      <span className="font-medium tracking-wide text-slate-500">{ui.label}</span>
+      <span className="ml-auto shrink-0 text-slate-600">#{e.txHash.slice(2, 6)}</span>
+      <span className={`shrink-0 font-semibold ${ui.amount}`}>
         {ui.sign}
         {fmtEth6(e.amount)}
       </span>
