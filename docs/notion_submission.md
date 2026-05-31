@@ -6,7 +6,6 @@ VeriFlip is a provably fair, mobile-first Web3 casino featuring an on-chain Coin
 - **Live Platform:** [https://frontend-evg-s-projects.vercel.app](https://frontend-evg-s-projects.vercel.app)
 - **Smart Contract (Sepolia):** [`0x38097F553ce38747835b429d8674F6861E994955`](https://sepolia.etherscan.io/address/0x38097F553ce38747835b429d8674F6861E994955)
 - **GitHub Repository:** [https://github.com/erass-spec/veriflip](https://github.com/erass-spec/veriflip)
-- **Loom Presentation Video:** [ВСТАВЬТЕ_ССЫЛКУ_НА_LOOM]
 
 ---
 
@@ -15,7 +14,7 @@ VeriFlip is a provably fair, mobile-first Web3 casino featuring an on-chain Coin
 - **Smart Contract:** Solidity 0.8.24, OpenZeppelin (`Ownable`, `ReentrancyGuard`), Custom Errors, Events.
 - **Frontend:** Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui, Wagmi, Viem, Framer Motion.
 - **Testing & Deployment:** Hardhat, ethers.js, Vercel, Git.
-- **CI/CD:** Automated GitHub -> Vercel push-to-deploy pipeline (Root directory: `/frontend`, variables encrypted in Vercel Cloud).
+- **CI/CD:** Automated GitHub -> Vercel push-to-deploy pipeline.
 
 ---
 
