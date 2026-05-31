@@ -80,7 +80,7 @@ function RadarScope() {
     <svg
       viewBox="0 0 200 200"
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[290px] w-[290px] -translate-x-1/2 -translate-y-1/2 opacity-50"
+      className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[232px] w-[232px] -translate-x-1/2 -translate-y-1/2 opacity-50"
     >
       {/* faint static rings + radial scan grid */}
       <circle cx="100" cy="100" r="94" fill="none" stroke="#22d3ee" strokeWidth="0.4" strokeOpacity="0.18" />
@@ -318,22 +318,26 @@ export default function GamePanel({
       </div>
 
       {/* Coin */}
-      <div className="relative isolate mb-6 flex flex-col items-center">
-        {/* State-aware ambient glow engine */}
-        <motion.div
-          key={glowState}
-          aria-hidden
-          initial={glow.initial as any}
-          animate={glow.animate as any}
-          transition={glow.transition as any}
-          className={`pointer-events-none absolute left-1/2 top-1/2 -z-10 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl ${glow.color}`}
-        />
-        {/* Crisp radar/scope chamber sits above the soft glow, behind the coin */}
-        <RadarScope />
-        <div className="[perspective:800px]" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
-          <motion.div style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}>
-            <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={200} />
-          </motion.div>
+      <div className="mb-6 mt-1 flex flex-col items-center">
+        {/* Fixed-size chamber viewport — the radar is fully contained here, so it can never
+            bleed up into the HUD bar regardless of the coin/banner state below it. */}
+        <div className="relative isolate flex h-[240px] w-[240px] items-center justify-center">
+          {/* State-aware ambient glow engine */}
+          <motion.div
+            key={glowState}
+            aria-hidden
+            initial={glow.initial as any}
+            animate={glow.animate as any}
+            transition={glow.transition as any}
+            className={`pointer-events-none absolute left-1/2 top-1/2 -z-10 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl ${glow.color}`}
+          />
+          {/* Crisp radar/scope chamber sits above the soft glow, behind the coin */}
+          <RadarScope />
+          <div className="[perspective:800px]" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
+            <motion.div style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}>
+              <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={168} />
+            </motion.div>
+          </div>
         </div>
         <AnimatePresence>
           {coin === "settled" && last && (
@@ -539,16 +543,16 @@ export default function GamePanel({
         </Link>
       )}
 
-      {/* Lucky Seed customizer — your provably-fair client seed */}
+      {/* Client Seed (Provably Fair) — the player injects their own randomness */}
       <div className="mt-4 border-t border-white/10 pt-3 text-center">
         <button
           onClick={() => {
             sound.click();
             setSeedOpen((o) => !o);
           }}
-          className="font-mono text-xs text-white/40 transition hover:text-white/70"
+          className="font-mono text-xs text-white/50 transition hover:text-emerald-300/90"
         >
-          Lucky Seed: <span className="text-emerald-300/80">&quot;{seedWord || "random"}&quot;</span> ⚙️
+          ⚙️ Custom Client Seed (Provably Fair)
         </button>
         <AnimatePresence>
           {seedOpen && (
@@ -563,11 +567,13 @@ export default function GamePanel({
                 onChange={(e) => setSeedWord(e.target.value)}
                 disabled={locked}
                 maxLength={32}
-                placeholder="your seed word"
+                placeholder="Enter a lucky word (e.g., jackpot)"
                 className="mt-2 w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-center font-mono text-xs outline-none transition placeholder:text-white/25 focus:border-emerald-400/60"
               />
-              <p className="mt-1.5 text-[10px] leading-relaxed text-white/35">
-                Mixed into every flip&apos;s randomness and shown in the verify panel. Empty = a fresh random seed each flip.
+              <p className="mt-2 rounded-lg border border-emerald-400/15 bg-emerald-400/[0.04] px-3 py-2 text-left text-[10px] leading-relaxed text-white/45">
+                <span className="font-semibold text-emerald-300/90">Provably Fair Key:</span> By entering
+                your own custom word (seed), you inject your own randomness into the blockchain formula.
+                This mathematically proves that the casino cannot pre-calculate or manipulate your outcome.
               </p>
             </motion.div>
           )}
