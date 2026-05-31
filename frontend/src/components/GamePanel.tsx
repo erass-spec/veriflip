@@ -14,6 +14,7 @@ import { fireConfetti } from "@/lib/confetti";
 import { toastSuccess } from "@/lib/toast";
 import CoinAnimation from "./CoinAnimation";
 import OnboardingConsole from "./OnboardingConsole";
+import ModeBadge from "./ModeBadge";
 
 // Below this native-ETH balance the burner can't reliably cover another tx's gas.
 const LOW_GAS_WEI = parseEther("0.0015");
@@ -326,6 +327,11 @@ export default function GamePanel({
 
   return (
     <div className="card relative overflow-hidden border border-white/10 bg-slate-900/60 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-6 backdrop-blur-xl animate-float-glow transition-all duration-500 [background-size:20px_20px]">
+      {/* Active connection-mode badge */}
+      <div className="mb-4 flex justify-center">
+        <ModeBadge />
+      </div>
+
       {/* Micro-dashboard stats console + integrated mute control */}
       <div className="mb-5 flex items-stretch gap-2">
         <div className="grid flex-1 grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/40">

@@ -20,6 +20,20 @@ export interface GameRow {
   blockNumber: bigint;
 }
 
+// A unified on-chain activity entry — bets, deposits and withdrawals share one timeline.
+// blockNumber + logIndex give a true chronological key across all three event types.
+export type LedgerEntry =
+  | { kind: "bet"; key: string; blockNumber: bigint; logIndex: number; bet: GameRow }
+  | {
+      kind: "deposit" | "withdraw";
+      key: string;
+      blockNumber: bigint;
+      logIndex: number;
+      player: `0x${string}`;
+      amount: bigint;
+      txHash: `0x${string}`;
+    };
+
 export interface ChainState {
   balance: bigint; // withdrawable in-contract game balance
   bankroll: bigint;
@@ -35,6 +49,81 @@ function randomSeed(): `0x${string}` {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return toHex(bytes) as `0x${string}`;
+}
+
+function mapGameRow(l: any): GameRow {
+  return {
+    gameId: l.args.gameId,
+    player: l.args.player,
+    betAmount: l.args.betAmount,
+    choice: Number(l.args.choice),
+    result: Number(l.args.result),
+    won: l.args.won,
+    payout: l.args.payout,
+    prevrandao: l.args.prevrandao,
+    seed: l.args.seed,
+    nonce: l.args.nonce,
+    txHash: l.transactionHash,
+    blockNumber: l.blockNumber,
+  };
+}
+
+// Newest first: primary key blockNumber (desc), tiebreak logIndex (desc).
+function byRecency(a: LedgerEntry, b: LedgerEntry): number {
+  if (a.blockNumber !== b.blockNumber) return a.blockNumber > b.blockNumber ? -1 : 1;
+  return b.logIndex - a.logIndex;
+}
+
+/**
+ * Fetch the unified on-chain ledger — BetSettled + Deposited + Withdrawn — over the
+ * given block window, merged into one chronological feed. Returns `bets` separately
+ * (the verify panel still needs raw GameRows). Shared by the live hook and the landing feed.
+ */
+export async function fetchLedger(
+  client: any,
+  address: `0x${string}`,
+  span: bigint | "all"
+): Promise<{ bets: GameRow[]; entries: LedgerEntry[] }> {
+  const latest = await client.getBlockNumber();
+  const fromBlock = span === "all" ? 0n : latest > span ? latest - span : 0n;
+  const opts = { address, abi: coinFlipAbi, fromBlock, toBlock: "latest" as const };
+  const [betLogs, depLogs, wdrLogs] = await Promise.all([
+    client.getContractEvents({ ...opts, eventName: "BetSettled" }),
+    client.getContractEvents({ ...opts, eventName: "Deposited" }),
+    client.getContractEvents({ ...opts, eventName: "Withdrawn" }),
+  ]);
+
+  const bets: GameRow[] = betLogs.map(mapGameRow).sort((a: GameRow, b: GameRow) => Number(b.gameId - a.gameId));
+
+  const entries: LedgerEntry[] = [
+    ...betLogs.map((l: any) => ({
+      kind: "bet" as const,
+      key: `${l.transactionHash}-${l.logIndex}`,
+      blockNumber: l.blockNumber,
+      logIndex: Number(l.logIndex),
+      bet: mapGameRow(l),
+    })),
+    ...depLogs.map((l: any) => ({
+      kind: "deposit" as const,
+      key: `${l.transactionHash}-${l.logIndex}`,
+      blockNumber: l.blockNumber,
+      logIndex: Number(l.logIndex),
+      player: l.args.player,
+      amount: l.args.amount,
+      txHash: l.transactionHash,
+    })),
+    ...wdrLogs.map((l: any) => ({
+      kind: "withdraw" as const,
+      key: `${l.transactionHash}-${l.logIndex}`,
+      blockNumber: l.blockNumber,
+      logIndex: Number(l.logIndex),
+      player: l.args.player,
+      amount: l.args.amount,
+      txHash: l.transactionHash,
+    })),
+  ].sort(byRecency);
+
+  return { bets: bets.slice(0, 25), entries: entries.slice(0, 30) };
 }
 
 // Public RPCs load-balance and can briefly report a stale nonce right after a tx
@@ -56,6 +145,7 @@ export function useGame() {
   const { publicClient, walletClient, account, txAccount, network } = useWallet();
   const [state, setState] = useState<ChainState>(EMPTY);
   const [games, setGames] = useState<GameRow[]>([]);
+  const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [busy, setBusy] = useState(false);
 
   const address = network?.address;
@@ -69,10 +159,17 @@ export function useGame() {
   const nonceRef = useRef<number | null>(null);
   const nonceLock = useRef<Promise<unknown>>(Promise.resolve());
   const isLocalAccount = !!txAccount && typeof txAccount === "object";
+  // Mirror the latest in-contract balance so post-settle optimistic math never reads a
+  // stale closure value.
+  const balanceRef = useRef<bigint>(0n);
 
   useEffect(() => {
     nonceRef.current = null; // resync on (re)connect / account change
   }, [account]);
+
+  useEffect(() => {
+    balanceRef.current = state.balance;
+  }, [state.balance]);
 
   // Allocate the next nonce, SERIALIZED via a promise chain so two rapid clicks can never
   // read-then-increment concurrently and grab the same nonce. Takes max(tracked, chain)
@@ -116,39 +213,49 @@ export function useGame() {
   const refreshGames = useCallback(async () => {
     if (!publicClient || !address) return;
     try {
-      const latest = await publicClient.getBlockNumber();
       // Local chains are short (scan from genesis); public RPCs cap getLogs ranges
       // (publicnode = 50000 blocks), so bound the window on anything non-local.
       const isLocalChain = publicClient.chain?.id === 31337;
-      const span = isLocalChain ? latest : 10_000n; // safe across fallback RPCs' getLogs caps
-      const fromBlock = latest > span ? latest - span : 0n;
-      const logs = await publicClient.getContractEvents({
-        address,
-        abi: coinFlipAbi,
-        eventName: "BetSettled",
-        fromBlock,
-        toBlock: "latest",
-      });
-      const rows: GameRow[] = logs.map((l: any) => ({
-        gameId: l.args.gameId,
-        player: l.args.player,
-        betAmount: l.args.betAmount,
-        choice: Number(l.args.choice),
-        result: Number(l.args.result),
-        won: l.args.won,
-        payout: l.args.payout,
-        prevrandao: l.args.prevrandao,
-        seed: l.args.seed,
-        nonce: l.args.nonce,
-        txHash: l.transactionHash,
-        blockNumber: l.blockNumber,
-      }));
-      rows.sort((a, b) => Number(b.gameId - a.gameId));
-      setGames(rows.slice(0, 25));
+      const { bets, entries: ledger } = await fetchLedger(publicClient, address, isLocalChain ? "all" : 10_000n);
+      setGames(bets);
+      setEntries(ledger);
     } catch {
       /* ignore — feed is best-effort */
     }
   }, [publicClient, address]);
+
+  // Optimistic + reconciled balance. After a settled tx we know the EXACT new balance, so we
+  // show it instantly, then poll the contract until the (often lagging) public RPC confirms
+  // the same value before doing an authoritative full refresh. This kills the "balance still
+  // shows the pre-flip value" stale-read flicker without ever displaying a wrong number.
+  const reconcileBalance = useCallback(
+    (expected: bigint) => {
+      balanceRef.current = expected;
+      setState((s) => ({ ...s, balance: expected }));
+      if (!publicClient || !address || !account) return;
+      let tries = 0;
+      const tick = async () => {
+        try {
+          const onchain = (await publicClient.readContract({
+            address,
+            abi: coinFlipAbi,
+            functionName: "balances",
+            args: [account],
+          })) as bigint;
+          if (onchain === expected) {
+            refreshState(); // node caught up — sync bankroll / gas / etc. authoritatively
+            return;
+          }
+        } catch {
+          /* transient RPC error — keep polling */
+        }
+        if (++tries < 6) setTimeout(tick, 1200);
+        else refreshState();
+      };
+      setTimeout(tick, 900);
+    },
+    [publicClient, address, account, refreshState]
+  );
 
   useEffect(() => {
     if (ready) {
@@ -176,7 +283,8 @@ export function useGame() {
           })
         );
         await publicClient!.waitForTransactionReceipt({ hash, timeout: 120_000 });
-        await refreshState();
+        reconcileBalance(balanceRef.current + parseEther(eth)); // deposit credits the full amount
+        refreshGames(); // surface the new deposit in the unified ledger
         return hash;
       } catch (e) {
         resetNonce();
@@ -185,7 +293,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce, resetNonce]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, reconcileBalance, nextNonce, resetNonce]
   );
 
   const withdraw = useCallback(
@@ -207,7 +315,8 @@ export function useGame() {
           })
         );
         await publicClient!.waitForTransactionReceipt({ hash, timeout: 120_000 });
-        await refreshState();
+        reconcileBalance(balanceRef.current - parseEther(eth)); // withdraw debits the full amount
+        refreshGames(); // surface the new withdrawal in the unified ledger
         return hash;
       } catch (e) {
         resetNonce();
@@ -216,7 +325,7 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, nextNonce, resetNonce]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, reconcileBalance, nextNonce, resetNonce]
   );
 
   /** Place a flip. Returns the settled game row parsed from the BetSettled event. */
@@ -265,7 +374,9 @@ export function useGame() {
           txHash: hash,
           blockNumber: receipt.blockNumber,
         };
-        await refreshState();
+        // Exact post-flip balance — contract takes the bet up front (bal − bet), then credits
+        // the full payout on a win. Show it instantly; reconcileBalance handles the RPC lag.
+        reconcileBalance(balanceRef.current + (row.won ? row.payout - row.betAmount : -row.betAmount));
         refreshGames();
         return row;
       } catch (e) {
@@ -279,8 +390,8 @@ export function useGame() {
         setBusy(false);
       }
     },
-    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, nextNonce, resetNonce]
+    [walletClient, publicClient, address, account, txAccount, network, refreshState, refreshGames, reconcileBalance, nextNonce, resetNonce]
   );
 
-  return { state, games, busy, ready, refreshState, refreshGames, deposit, withdraw, flip };
+  return { state, games, entries, busy, ready, refreshState, refreshGames, deposit, withdraw, flip };
 }

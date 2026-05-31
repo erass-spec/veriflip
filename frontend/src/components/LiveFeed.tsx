@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPublicClient } from "viem";
-import { LOCAL_NETWORK, SEPOLIA_NETWORK, coinFlipAbi, makeTransport } from "@/lib/contract";
-import type { GameRow } from "@/lib/useGame";
+import { LOCAL_NETWORK, SEPOLIA_NETWORK, makeTransport } from "@/lib/contract";
+import { fetchLedger, type LedgerEntry } from "@/lib/useGame";
 import RecentGames from "./RecentGames";
 
 // Picks Sepolia when an address is configured, else the local chain. Best-effort:
@@ -11,7 +11,7 @@ import RecentGames from "./RecentGames";
 const NET = SEPOLIA_NETWORK.address ? SEPOLIA_NETWORK : LOCAL_NETWORK;
 
 export default function LiveFeed() {
-  const [games, setGames] = useState<GameRow[]>([]);
+  const [entries, setEntries] = useState<LedgerEntry[]>([]);
 
   useEffect(() => {
     let alive = true;
@@ -19,36 +19,10 @@ export default function LiveFeed() {
       if (!NET.address) return;
       try {
         const client = createPublicClient({ chain: NET.chain, transport: makeTransport(NET.chain.id) });
-        const latest = await client.getBlockNumber();
         // Conservative window so getLogs succeeds across fallback RPCs with smaller caps.
-        const span = NET === SEPOLIA_NETWORK ? 10_000n : latest;
-        const fromBlock = latest > span ? latest - span : 0n;
-        const logs = await client.getContractEvents({
-          address: NET.address,
-          abi: coinFlipAbi,
-          eventName: "BetSettled",
-          fromBlock,
-          toBlock: "latest",
-        });
-        if (!alive) return;
-        const rows = logs
-          .map((l: any) => ({
-            gameId: l.args.gameId,
-            player: l.args.player,
-            betAmount: l.args.betAmount,
-            choice: Number(l.args.choice),
-            result: Number(l.args.result),
-            won: l.args.won,
-            payout: l.args.payout,
-            prevrandao: l.args.prevrandao,
-            seed: l.args.seed,
-            nonce: l.args.nonce,
-            txHash: l.transactionHash,
-            blockNumber: l.blockNumber,
-          }))
-          .sort((a, b) => Number(b.gameId - a.gameId))
-          .slice(0, 8);
-        setGames(rows);
+        const span = NET === SEPOLIA_NETWORK ? 10_000n : ("all" as const);
+        const { entries: ledger } = await fetchLedger(client, NET.address, span);
+        if (alive) setEntries(ledger.slice(0, 8));
       } catch {
         /* offline / not deployed — empty state is fine */
       }
@@ -58,5 +32,5 @@ export default function LiveFeed() {
     };
   }, []);
 
-  return <RecentGames games={games} compact />;
+  return <RecentGames entries={entries} compact />;
 }

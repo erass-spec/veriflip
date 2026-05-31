@@ -7,6 +7,7 @@ import { useWallet } from "@/lib/wallet";
 import type { useGame } from "@/lib/useGame";
 import { fmtEth6, friendlyError } from "@/lib/format";
 import { toastSuccess } from "@/lib/toast";
+import ModeBadge from "./ModeBadge";
 
 const PRESETS = ["0.002", "0.005", "0.01"];
 
@@ -121,14 +122,17 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
 
   return (
     <div className="card p-5 shadow-2xl transition-all duration-500 hover:border-emerald-500/10">
-      <h3 className="mb-4 flex items-center gap-2 text-lg font-bold">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]">
-          <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="#34d399" strokeWidth="2" />
-          <circle cx="12" cy="12" r="3.2" stroke="#34d399" strokeWidth="2" />
-          <path d="M12 12v3.5" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-        <span className="gradient-text">Your Secure Vault</span>
-      </h3>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-lg font-bold">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]">
+            <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="#34d399" strokeWidth="2" />
+            <circle cx="12" cy="12" r="3.2" stroke="#34d399" strokeWidth="2" />
+            <path d="M12 12v3.5" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span className="gradient-text">Your Secure Vault</span>
+        </h3>
+        <ModeBadge />
+      </div>
 
       {/* Wallet → Vault flow diagram */}
       <div className="mb-4 flex items-center gap-1.5">
