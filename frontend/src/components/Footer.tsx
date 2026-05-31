@@ -1,3 +1,4 @@
+// VeriFlip CI/CD Pipeline Active
 import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import { SEPOLIA_NETWORK } from "@/lib/contract";
