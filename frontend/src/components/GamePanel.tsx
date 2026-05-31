@@ -345,10 +345,11 @@ export default function GamePanel({
         </div>
       </div>
 
-      {/* Coin */}
-      <div className="mb-6 mt-1 flex flex-col items-center">
+      {/* Coin + status — STRICT fixed height so the controls below never shift (zero CLS).
+          Idle, spinning, win and loss all occupy exactly the same vertical space. */}
+      <div className="relative mb-6 mt-1 flex h-[280px] flex-col items-center">
         {/* Fixed-size chamber viewport — the radar is fully contained here, so it can never
-            bleed up into the HUD bar regardless of the coin/banner state below it. */}
+            bleed up into the HUD bar regardless of the coin/status state. */}
         <div className="relative isolate flex h-[240px] w-[240px] items-center justify-center">
           {/* State-aware ambient glow engine */}
           <motion.div
@@ -367,15 +368,21 @@ export default function GamePanel({
             </motion.div>
           </div>
         </div>
-        <AnimatePresence>
+
+        {/* HUD status overlays — absolute glassmorphic pills floating over the lower half of
+            the coin. Pure opacity fades; never affect layout, so controls below stay fixed. */}
+        <AnimatePresence mode="wait">
           {coin === "settled" && last && (
             <motion.div
-              initial={{ scale: 0.6, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
+              key="settled"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ type: "spring", stiffness: 280, damping: 18 }}
-              className={`mt-4 rounded-2xl px-6 py-3 text-center text-xl font-extrabold ${
-                won ? "bg-neon-green/15 text-neon-green shadow-glow" : "bg-white/5 text-white/60"
+              transition={{ duration: 0.3 }}
+              className={`pointer-events-none absolute left-1/2 top-[170px] -translate-x-1/2 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-bold backdrop-blur-md ${
+                won
+                  ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-200 shadow-[0_0_26px_-4px_rgba(52,211,153,0.85)]"
+                  : "border-white/15 bg-slate-900/70 text-white/70 shadow-lg"
               }`}
             >
               {won ? `🎉 YOU WON +${fmtEth6(last.payout - last.betAmount)} ETH` : "😶 House wins this round"}
@@ -383,11 +390,14 @@ export default function GamePanel({
           )}
           {coin === "spinning" && (
             <motion.div
+              key="spinning"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mt-4 animate-pulse-glow text-sm text-neon-cyan"
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="pointer-events-none absolute left-1/2 top-[170px] -translate-x-1/2 whitespace-nowrap rounded-full border border-cyan-400/30 bg-slate-900/70 px-5 py-2 text-xs font-medium text-cyan-200 shadow-[0_0_20px_-6px_rgba(34,211,238,0.7)] backdrop-blur-md"
             >
-              Mining on {chainName}… confirming transaction
+              <span className="animate-pulse-glow">Mining on {chainName}… confirming transaction</span>
             </motion.div>
           )}
         </AnimatePresence>
