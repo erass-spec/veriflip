@@ -7,11 +7,6 @@
 let ctx: AudioContext | null = null;
 let muted = false;
 
-// spin lifecycle
-let spinOsc: OscillatorNode | null = null;
-let spinGain: GainNode | null = null;
-let spinTimer: ReturnType<typeof setInterval> | null = null;
-
 function ensureCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
@@ -45,7 +40,6 @@ function blip(c: AudioContext, freq: number, when: number, dur: number, type: Os
 export const sound = {
   setMuted(m: boolean) {
     muted = m;
-    if (m) sound.stopSpin();
   },
   isMuted() {
     return muted;
@@ -56,6 +50,34 @@ export const sound = {
     if (muted) return;
     const c = ensureCtx();
     if (c) blip(c, 1180, 0, 0.045, "square", 0.05);
+  },
+
+  // Single metallic "coin flick" — bright inharmonic ping with a slight downward bend
+  // and fast exponential decay to silence (~0.75s). Played once when a flip is dispatched.
+  flick() {
+    if (muted) return;
+    const c = ensureCtx();
+    if (!c) return;
+    const t0 = c.currentTime;
+    const partials: Array<[number, number, OscillatorType]> = [
+      [2500, 0.14, "triangle"],
+      [3730, 0.06, "sine"],
+      [5200, 0.03, "sine"],
+    ];
+    for (const [f, peak, type] of partials) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f, t0);
+      o.frequency.exponentialRampToValueAtTime(f * 0.86, t0 + 0.7); // subtle flick bend
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.008); // fast attack
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.75); // fast decay to silence
+      o.connect(g);
+      g.connect(c.destination);
+      o.start(t0);
+      o.stop(t0 + 0.8);
+    }
   },
 
   // Triumphant ascending major arpeggio C-E-G-C with a warm echo.
@@ -75,48 +97,5 @@ export const sound = {
     const c = ensureCtx();
     if (!c) return;
     [440, 349.23, 293.66].forEach((f, i) => blip(c, f, i * 0.13, 0.42, "sine", 0.09));
-  },
-
-  // Tense rising sweep that loops until stopped (mining can take ~12s + retries).
-  startSpin() {
-    if (muted) return;
-    const c = ensureCtx();
-    if (!c) return;
-    sound.stopSpin();
-    spinOsc = c.createOscillator();
-    spinGain = c.createGain();
-    spinOsc.type = "sawtooth";
-    spinGain.gain.setValueAtTime(0.035, c.currentTime);
-    spinOsc.connect(spinGain);
-    spinGain.connect(c.destination);
-    const sweep = () => {
-      if (!ctx || !spinOsc) return;
-      const t = ctx.currentTime;
-      spinOsc.frequency.cancelScheduledValues(t);
-      spinOsc.frequency.setValueAtTime(300, t);
-      spinOsc.frequency.exponentialRampToValueAtTime(900, t + 0.42);
-    };
-    sweep();
-    spinTimer = setInterval(sweep, 460);
-    spinOsc.start();
-  },
-
-  stopSpin() {
-    if (spinTimer) {
-      clearInterval(spinTimer);
-      spinTimer = null;
-    }
-    if (spinGain && ctx) {
-      spinGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
-    }
-    if (spinOsc && ctx) {
-      try {
-        spinOsc.stop(ctx.currentTime + 0.1);
-      } catch {
-        /* already stopped */
-      }
-    }
-    spinOsc = null;
-    spinGain = null;
   },
 };

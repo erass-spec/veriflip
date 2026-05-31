@@ -153,10 +153,9 @@ export default function GamePanel({
     setPending("flip");
     setLast(null);
     setCoin("spinning");
-    sound.startSpin(); // tense rising loop until the flip resolves (owned by this handler)
+    sound.flick(); // single coin-toss flick at dispatch; the wait stays silent
     try {
       const row = await flip(choice, amount, seedWord);
-      sound.stopSpin();
       setLast(row);
       setCoin("settled");
       onSettled(row);
@@ -166,7 +165,6 @@ export default function GamePanel({
       setHistory((h) => [...h, row.won].slice(-5));
       setStreak((s) => (row.won ? s + 1 : 0));
     } catch (e) {
-      sound.stopSpin();
       console.error("[wibe] flip failed —", (e as any)?.shortMessage || (e as any)?.details || (e as any)?.message, e);
       setCoin("idle");
       setError(friendlyError(e));
