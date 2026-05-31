@@ -347,7 +347,7 @@ export default function GamePanel({
 
       {/* Coin + status — STRICT fixed height so the controls below never shift (zero CLS).
           Idle, spinning, win and loss all occupy exactly the same vertical space. */}
-      <div className="relative mb-3 mt-1 flex h-[185px] flex-col items-center md:mb-6 md:h-[280px]">
+      <div className="relative mb-2 mt-1 flex h-[172px] flex-col items-center md:mb-3 md:h-[240px]">
         {/* Fixed-size chamber viewport — the radar is fully contained here, so it can never
             bleed up into the HUD bar regardless of the coin/status state. Compacts on mobile. */}
         <div className="relative isolate flex h-[172px] w-[172px] items-center justify-center md:h-[240px] md:w-[240px]">
