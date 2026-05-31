@@ -2,12 +2,22 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { parseEther } from "viem";
+import { formatEther, parseEther } from "viem";
 import { useWallet } from "@/lib/wallet";
 import type { useGame } from "@/lib/useGame";
 import { fmtEth6, friendlyError } from "@/lib/format";
 
 const PRESETS = ["0.002", "0.005", "0.01"];
+
+// Leave a little native ETH in the wallet so the user can still pay the deposit gas fee.
+const GAS_RESERVE = parseEther("0.003");
+
+// Truncate (never round up) a wei amount to 6 dp — clean input values that can't exceed balance.
+function trimTo6(wei: bigint): string {
+  const [int, frac = ""] = formatEther(wei).split(".");
+  const t = frac.slice(0, 6).replace(/0+$/, "");
+  return t ? `${int}.${t}` : int;
+}
 
 type Tab = "deposit" | "withdraw";
 
@@ -63,9 +73,10 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isDeposit = tab === "deposit";
   const walletEth = state.gas; // native ETH in the connected wallet
   const gameBal = state.balance; // funds inside the contract vault
-  const available = tab === "deposit" ? walletEth : gameBal;
+  const available = isDeposit ? walletEth : gameBal;
 
   let amtWei: bigint | null = null;
   try {
@@ -73,9 +84,15 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
   } catch {
     amtWei = null;
   }
+  const emptyOrZero = !amount || Number(amount) <= 0;
   const exceeds = amtWei !== null && amtWei > available;
   const valid = amtWei !== null && !exceeds;
   const locked = pending || busy; // any in-flight tx (incl. a flip) locks the vault
+
+  // Smart MAX: deposit reserves a little gas; withdraw cashes out the full vault (0 fees).
+  const maxWei = isDeposit ? (walletEth > GAS_RESERVE ? walletEth - GAS_RESERVE : 0n) : gameBal;
+  const canMax = !locked && maxWei > 0n;
+  const setMax = () => setAmount(trimTo6(maxWei));
 
   async function submit() {
     setError(null);
@@ -91,8 +108,6 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
       setPending(false);
     }
   }
-
-  const isDeposit = tab === "deposit";
 
   if (!account) return null;
 
@@ -146,6 +161,9 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
       </div>
 
       {/* Amount */}
+      <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">
+        {isDeposit ? "Enter amount to deposit" : "Enter amount to withdraw"}
+      </div>
       <div className="mb-3 flex items-center gap-2">
         <input
           type="number"
@@ -154,10 +172,19 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           disabled={locked}
-          className={`w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)] ${
+          placeholder="0.000000"
+          className={`w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition placeholder:text-white/25 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)] ${
             isDeposit ? "focus:border-cyan-400/60" : "focus:border-violet-400/60"
           }`}
         />
+        <button
+          onClick={setMax}
+          disabled={!canMax}
+          title={isDeposit ? "Deposit your wallet balance (less a little gas)" : "Withdraw your full vault balance"}
+          className="rounded-xl border border-emerald-400/40 bg-emerald-400/5 px-3 py-3 text-xs font-bold text-emerald-300 shadow-[0_0_14px_-3px_rgba(52,211,153,0.7)] transition hover:bg-emerald-400/15 hover:shadow-[0_0_20px_-2px_rgba(52,211,153,0.9)] disabled:opacity-40 disabled:shadow-none"
+        >
+          MAX
+        </button>
         <span className="text-white/40">ETH</span>
       </div>
 
@@ -216,10 +243,14 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
             <Spinner />
             {isDeposit ? "Securing transaction on-chain…" : "Withdrawing to MetaMask…"}
           </>
+        ) : emptyOrZero ? (
+          "Enter an Amount"
+        ) : exceeds ? (
+          "Exceeds available balance"
         ) : isDeposit ? (
-          "Deposit to Vault"
+          `Deposit ${amount} ETH to Vault`
         ) : (
-          "Withdraw to Wallet"
+          `Withdraw ${amount} ETH to Wallet`
         )}
       </button>
 
