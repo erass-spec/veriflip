@@ -5,7 +5,7 @@
  */
 
 let ctx: AudioContext | null = null;
-let muted = false;
+let muted = true; // muted by default until useSound applies the stored preference
 
 function ensureCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;

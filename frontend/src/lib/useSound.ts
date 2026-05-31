@@ -3,16 +3,22 @@
 import { useEffect, useState } from "react";
 import { sound } from "./sound";
 
-const KEY = "vf_muted";
+const KEY = "veriflip_muted";
 
-/** Mute state for the SFX engine, persisted in localStorage. SSR-safe (defaults unmuted). */
+/**
+ * Mute state for the SFX engine, persisted in localStorage.
+ * Muted by DEFAULT for first-time visitors (respects browser autoplay policy, never startles).
+ * Returning visitors get whatever they last chose. SSR-safe: the initial render is always
+ * muted (deterministic — no hydration drift), then the stored preference is applied on mount.
+ */
 export function useSound() {
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" && localStorage.getItem(KEY) === "1";
-    setMuted(stored);
-    sound.setMuted(stored);
+    const stored = typeof window !== "undefined" ? localStorage.getItem(KEY) : null;
+    const initial = stored === null ? true : stored === "true"; // new visitor → muted
+    setMuted(initial);
+    sound.setMuted(initial);
   }, []);
 
   const toggle = () => {
@@ -20,7 +26,7 @@ export function useSound() {
     setMuted(next);
     sound.setMuted(next);
     try {
-      localStorage.setItem(KEY, next ? "1" : "0");
+      localStorage.setItem(KEY, next ? "true" : "false");
     } catch {
       /* ignore */
     }

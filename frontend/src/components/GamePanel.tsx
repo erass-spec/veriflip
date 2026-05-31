@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useSpring } from "framer-motion";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
 import { fmtEth6, friendlyError } from "@/lib/format";
-import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
+import { type Side } from "@/lib/contract";
 import { sound } from "@/lib/sound";
 import { useSound } from "@/lib/useSound";
 import { fireConfetti } from "@/lib/confetti";
@@ -39,15 +39,6 @@ function WalletIcon() {
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_4px_rgba(52,211,153,0.8)]">
       <rect x="3" y="6" width="18" height="13" rx="2.5" stroke="#34d399" strokeWidth="2" />
       <circle cx="16.5" cy="12.5" r="1.3" fill="#34d399" />
-    </svg>
-  );
-}
-
-function VaultIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="drop-shadow-[0_0_4px_rgba(34,211,238,0.7)]">
-      <rect x="4" y="10" width="16" height="10" rx="2" stroke="#22d3ee" strokeWidth="2" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -327,42 +318,31 @@ export default function GamePanel({
 
   return (
     <div className="card relative overflow-hidden border border-white/10 bg-slate-900/60 bg-[radial-gradient(rgba(255,255,255,0.025)_1px,transparent_1px)] p-6 backdrop-blur-xl animate-float-glow transition-all duration-500 [background-size:20px_20px]">
-      {/* Active connection-mode badge */}
-      <div className="mb-4 flex justify-center">
-        <ModeBadge />
-      </div>
-
-      {/* Micro-dashboard stats console + integrated mute control */}
-      <div className="mb-5 flex items-stretch gap-2">
-        <div className="grid flex-1 grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/40">
-          <div className="px-3 py-2.5">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
-              <WalletIcon /> Balance
-            </div>
-            <div className="mt-0.5 font-mono text-base font-bold text-emerald-400">{fmtEth6(state.balance)}</div>
+      {/* Self-contained dashboard HUD — game balance · status badge · mute. The "house" and
+          "edge·payout" metadata lives on the landing/diagnostics; here we keep the player focused. */}
+      <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3">
+        {/* Left: the in-contract (game) balance, clearly distinguished from the wallet balance */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+            <WalletIcon /> Game Balance
           </div>
-          <div className="px-3 py-2.5">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
-              <VaultIcon /> House
-            </div>
-            <div className="mt-0.5 font-mono text-base font-bold text-white/80">{fmtEth6(state.bankroll)}</div>
-          </div>
-          <div className="px-3 py-2.5">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Edge · Payout</div>
-            <div className="mt-0.5 font-mono text-base font-bold text-neon-gold">
-              {HOUSE_EDGE} · {PAYOUT_MULTIPLIER}
-            </div>
+          <div className="mt-0.5 font-mono text-base font-bold text-emerald-400 [text-shadow:0_0_12px_rgba(52,211,153,0.45)]">
+            {fmtEth6(state.balance)} <span className="text-xs font-semibold text-emerald-400/60">ETH</span>
           </div>
         </div>
-        {/* Mute — a clean circular console setting, vertically centered against the stats bar */}
-        <button
-          onClick={toggleMute}
-          title={muted ? "Unmute sound effects" : "Mute sound effects"}
-          aria-label={muted ? "Unmute" : "Mute"}
-          className="flex h-10 w-10 shrink-0 self-center items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm backdrop-blur transition hover:bg-white/10 hover:shadow-[0_0_14px_-2px_rgba(34,211,238,0.6)]"
-        >
-          {muted ? "🔇" : "🔊"}
-        </button>
+
+        {/* Right: active-mode badge + circular mute, vertically centered against the balance */}
+        <div className="flex shrink-0 items-center gap-2.5">
+          <ModeBadge />
+          <button
+            onClick={toggleMute}
+            title={muted ? "Unmute sound effects" : "Mute sound effects"}
+            aria-label={muted ? "Unmute" : "Mute"}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-sm backdrop-blur transition hover:bg-white/10 hover:shadow-[0_0_14px_-2px_rgba(34,211,238,0.6)]"
+          >
+            {muted ? "🔇" : "🔊"}
+          </button>
+        </div>
       </div>
 
       {/* Coin */}
