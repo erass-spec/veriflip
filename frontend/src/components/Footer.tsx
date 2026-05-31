@@ -46,7 +46,7 @@ export default function Footer() {
               <li><ResourceLink href="/play">Play Casino</ResourceLink></li>
               <li><ResourceLink href="/vault">Secure Vault</ResourceLink></li>
               <li><ResourceLink href={contractUrl} external>Verified Contract</ResourceLink></li>
-              <li><ResourceLink href={GITHUB_URL} external>Security Audit</ResourceLink></li>
+              <li><ResourceLink href={GITHUB_URL} external>GitHub Code</ResourceLink></li>
             </ul>
           </div>
 
