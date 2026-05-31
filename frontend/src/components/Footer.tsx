@@ -1,4 +1,4 @@
-// VeriFlip CI/CD Pipeline Active
+// VeriFlip CI/CD Pipeline Active — auto-deploy from main verified
 import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import { SEPOLIA_NETWORK } from "@/lib/contract";
