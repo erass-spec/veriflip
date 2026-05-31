@@ -12,3 +12,6 @@ dist
 typechain-types
 *.log
 .DS_Store
+
+# Dev verification screenshots (not part of the submission)
+docs/shot-*.png
