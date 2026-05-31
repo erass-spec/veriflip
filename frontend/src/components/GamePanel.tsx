@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { formatEther, parseEther } from "viem";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useSpring } from "framer-motion";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
 import { fmtEth6, friendlyError } from "@/lib/format";
 import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
+import { sound } from "@/lib/sound";
+import { useSound } from "@/lib/useSound";
 import CoinAnimation from "./CoinAnimation";
 import OnboardingConsole from "./OnboardingConsole";
 
@@ -67,6 +69,26 @@ export default function GamePanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<null | "flip">(null);
 
+  // Gamification state
+  const { muted, toggle: toggleMute } = useSound();
+  const [history, setHistory] = useState<boolean[]>([]); // this session's results (oldest→newest)
+  const [streak, setStreak] = useState(0);
+  const [seedWord, setSeedWord] = useState("veriflip");
+  const [seedOpen, setSeedOpen] = useState(false);
+
+  // 3D holographic tilt — spring-smoothed, driven from pointer position (never setState).
+  const tiltX = useSpring(0, { stiffness: 150, damping: 15 });
+  const tiltY = useSpring(0, { stiffness: 150, damping: 15 });
+  function onCoinMove(e: React.MouseEvent) {
+    const r = e.currentTarget.getBoundingClientRect();
+    tiltY.set(((e.clientX - r.left) / r.width - 0.5) * 16);
+    tiltX.set(-((e.clientY - r.top) / r.height - 0.5) * 16);
+  }
+  function onCoinLeave() {
+    tiltX.set(0);
+    tiltY.set(0);
+  }
+
   const noContract = !network?.address || network.address === ("0x" as string);
 
   // Derive controls from the on-chain bet limits so the same UI works on any network
@@ -116,6 +138,7 @@ export default function GamePanel({
   // clears the result so the coin tactilely rotates to the newly chosen face.
   function selectSide(s: Side) {
     if (locked) return;
+    sound.click();
     setChoice(s);
     if (coin === "settled") {
       setLast(null);
@@ -130,12 +153,20 @@ export default function GamePanel({
     setPending("flip");
     setLast(null);
     setCoin("spinning");
+    sound.startSpin(); // tense rising loop until the flip resolves (owned by this handler)
     try {
-      const row = await flip(choice, amount);
+      const row = await flip(choice, amount, seedWord);
+      sound.stopSpin();
       setLast(row);
       setCoin("settled");
       onSettled(row);
+      // micro-reward + session tracking (once per flip, here — not in a render effect)
+      if (row.won) sound.win();
+      else sound.loss();
+      setHistory((h) => [...h, row.won].slice(-5));
+      setStreak((s) => (row.won ? s + 1 : 0));
     } catch (e) {
+      sound.stopSpin();
       console.error("[wibe] flip failed —", (e as any)?.shortMessage || (e as any)?.details || (e as any)?.message, e);
       setCoin("idle");
       setError(friendlyError(e));
@@ -167,6 +198,16 @@ export default function GamePanel({
 
   return (
     <div className="card relative overflow-hidden p-6 shadow-2xl transition-all duration-500 hover:border-emerald-500/10">
+      {/* Mute toggle — floats in the top-right corner, doesn't reflow the grid */}
+      <button
+        onClick={toggleMute}
+        title={muted ? "Unmute sound effects" : "Mute sound effects"}
+        aria-label={muted ? "Unmute" : "Mute"}
+        className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-slate-950/70 text-sm backdrop-blur transition hover:bg-white/10"
+      >
+        {muted ? "🔇" : "🔊"}
+      </button>
+
       {/* Micro-dashboard stats console */}
       <div className="mb-5 grid grid-cols-3 divide-x divide-white/10 rounded-xl border border-white/10 bg-slate-950/40">
         <div className="px-3 py-2.5">
@@ -191,7 +232,11 @@ export default function GamePanel({
 
       {/* Coin */}
       <div className="relative mb-6 flex flex-col items-center">
-        <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={200} />
+        <div className="[perspective:800px]" onMouseMove={onCoinMove} onMouseLeave={onCoinLeave}>
+          <motion.div style={{ rotateX: tiltX, rotateY: tiltY, transformStyle: "preserve-3d" }}>
+            <CoinAnimation status={coin} result={(last?.result ?? choice) as 0 | 1} size={200} />
+          </motion.div>
+        </div>
         <AnimatePresence>
           {coin === "settled" && last && (
             <motion.div
@@ -217,6 +262,30 @@ export default function GamePanel({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Session tracker: last 5 results + win streak */}
+      {history.length > 0 && (
+        <div className="mb-5 flex items-center justify-center gap-3">
+          <div className="flex items-center gap-1.5" title="Your last 5 flips this session">
+            {history.map((w, i) => (
+              <span
+                key={i}
+                className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                  w ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-slate-600"
+                }`}
+              />
+            ))}
+          </div>
+          {streak >= 2 && (
+            <span
+              className="rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-1 font-mono text-xs font-bold text-orange-300"
+              style={{ boxShadow: `0 0 ${6 + streak * 3}px rgba(251,146,60,${Math.min(0.35 + streak * 0.1, 0.85)})` }}
+            >
+              🔥 {streak} Win{streak > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Choice */}
       <StepLabel>1. Choose your side</StepLabel>
@@ -257,7 +326,10 @@ export default function GamePanel({
             className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition focus:border-emerald-400/60 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.15)]"
           />
           <button
-            onClick={setMax}
+            onClick={() => {
+              sound.click();
+              setMax();
+            }}
             disabled={!canMax}
             title="Bet the most you can: min(balance, max bet)"
             className="rounded-xl border border-emerald-400/40 bg-emerald-400/5 px-3 py-3 text-xs font-bold text-emerald-300 shadow-[0_0_14px_-3px_rgba(52,211,153,0.7)] transition hover:bg-emerald-400/15 hover:shadow-[0_0_20px_-2px_rgba(52,211,153,0.9)] disabled:opacity-40 disabled:shadow-none"
@@ -274,7 +346,10 @@ export default function GamePanel({
             return (
               <button
                 key={q}
-                onClick={() => setAmount(q)}
+                onClick={() => {
+                  sound.click();
+                  setAmount(q);
+                }}
                 disabled={locked}
                 className={`flex flex-1 flex-col items-center rounded-lg border py-1.5 transition-all duration-200 disabled:opacity-50 ${
                   active
@@ -362,6 +437,41 @@ export default function GamePanel({
           Need test ETH? Open your Vault to deposit →
         </Link>
       )}
+
+      {/* Lucky Seed customizer — your provably-fair client seed */}
+      <div className="mt-4 border-t border-white/10 pt-3 text-center">
+        <button
+          onClick={() => {
+            sound.click();
+            setSeedOpen((o) => !o);
+          }}
+          className="font-mono text-xs text-white/40 transition hover:text-white/70"
+        >
+          Lucky Seed: <span className="text-emerald-300/80">&quot;{seedWord || "random"}&quot;</span> ⚙️
+        </button>
+        <AnimatePresence>
+          {seedOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <input
+                value={seedWord}
+                onChange={(e) => setSeedWord(e.target.value)}
+                disabled={locked}
+                maxLength={32}
+                placeholder="your seed word"
+                className="mt-2 w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-center font-mono text-xs outline-none transition placeholder:text-white/25 focus:border-emerald-400/60"
+              />
+              <p className="mt-1.5 text-[10px] leading-relaxed text-white/35">
+                Mixed into every flip&apos;s randomness and shown in the verify panel. Empty = a fresh random seed each flip.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

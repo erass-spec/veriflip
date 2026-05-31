@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { parseEther, parseEventLogs, toHex } from "viem";
+import { keccak256, parseEther, parseEventLogs, toBytes, toHex } from "viem";
 import { useWallet } from "./wallet";
 import { coinFlipAbi, GAS_LIMITS, type Side } from "./contract";
 
@@ -221,12 +221,15 @@ export function useGame() {
 
   /** Place a flip. Returns the settled game row parsed from the BetSettled event. */
   const flip = useCallback(
-    async (choice: Side, eth: string): Promise<GameRow> => {
+    async (choice: Side, eth: string, seedInput?: string): Promise<GameRow> => {
       if (!walletClient || !publicClient || !address || !account || !network)
         throw new Error("not connected");
       setBusy(true);
       try {
-        const seed = randomSeed();
+        // Use the player's custom "lucky seed" word (hashed to bytes32) when provided,
+        // else a fresh random seed. The contract hashes whatever seed it's given and emits
+        // it in BetSettled, so verification stays correct for any seed.
+        const seed = seedInput && seedInput.trim() ? keccak256(toBytes(seedInput.trim())) : randomSeed();
         const nonce = await nextNonce();
         const hash = await sendOnce(() =>
           walletClient.writeContract({
