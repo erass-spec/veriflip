@@ -26,7 +26,7 @@ node: ## Start a local Hardhat node
 deploy-local: ## Deploy the contract to the local node + export ABI
 	npx hardhat run scripts/deploy.js --network localhost
 
-deploy: ## Deploy the frontend to Vercel production (env read from frontend/.env.local)
+deploy: ## [Fallback] Manual Vercel prod deploy — normally a push to main auto-deploys
 	@test -f $(ENV_FILE) || { echo "ERROR: missing $(ENV_FILE) — run 'npm run keygen' and the Sepolia deploy first."; exit 1; }
 	cd $(FRONTEND) && npx vercel --prod \
 		--build-env NEXT_PUBLIC_SEPOLIA_ADDRESS="$$(grep '^NEXT_PUBLIC_SEPOLIA_ADDRESS=' .env.local | cut -d= -f2)" \

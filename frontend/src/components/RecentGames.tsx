@@ -5,6 +5,27 @@ import type { GameRow, LedgerEntry } from "@/lib/useGame";
 import { fmtEth6, shortAddr } from "@/lib/format";
 import { sideLabel } from "@/lib/fair";
 import { useConnectivity, type ConnStatus } from "@/lib/useConnectivity";
+import { SEPOLIA_NETWORK } from "@/lib/contract";
+
+const EXPLORER = SEPOLIA_NETWORK.explorer || "https://sepolia.etherscan.io";
+
+// Wallet address rendered as a real Etherscan tx link. stopPropagation so clicking it in a
+// bet row opens the tx instead of triggering the row's verify-select. The ↗ reveals on hover.
+function AddrLink({ player, txHash, tone }: { player: `0x${string}`; txHash: `0x${string}`; tone: string }) {
+  return (
+    <a
+      href={`${EXPLORER}/tx/${txHash}`}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      title="View this transaction on Etherscan"
+      className={`group/addr inline-flex items-center gap-0.5 transition-colors hover:text-cyan-400 hover:underline ${tone}`}
+    >
+      {shortAddr(player)}
+      <span className="text-[9px] opacity-0 transition-opacity group-hover/addr:opacity-100">↗</span>
+    </a>
+  );
+}
 
 // Banking rows are deliberately muted — passive, low-contrast system-log entries that sit
 // behind the gameplay. Everything is slate-gray except a subtly-tinted (no-glow) amount.
@@ -70,12 +91,23 @@ function TerminalHeader() {
 }
 
 function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }) {
+  // A div (not a button) so it can host a real <a> for the address. Clicking the row opens
+  // the in-browser verify panel; clicking the address opens Etherscan (stopPropagation).
   return (
-    <motion.button
+    <motion.div
       {...ANIM}
       initial={{ opacity: 0, y: -14, backgroundColor: "rgba(52,211,153,0.18)" }}
       onClick={() => onSelect?.(g)}
-      className={`${ROW} transition-colors hover:bg-white/[0.04]`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.(g);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      title="Re-verify this flip"
+      className={`${ROW} cursor-pointer transition-colors hover:bg-white/[0.04]`}
     >
       <span className={g.won ? "text-emerald-400" : "text-white/30"}>{">"}</span>
       <span
@@ -85,7 +117,7 @@ function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }
       >
         {g.won ? "W" : "L"}
       </span>
-      <span className="text-cyan-300/80">{shortAddr(g.player)}</span>
+      <AddrLink player={g.player} txHash={g.txHash} tone="text-cyan-300/80" />
       <span className="text-white/40">
         {sideLabel(g.choice).toUpperCase()}→{sideLabel(g.result).toUpperCase()}
       </span>
@@ -93,7 +125,7 @@ function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }
       <span className={`shrink-0 font-semibold ${g.won ? "text-emerald-400" : "text-white/40"}`}>
         {g.won ? `+${fmtEth6(g.payout - g.betAmount)}` : `−${fmtEth6(g.betAmount)}`}
       </span>
-    </motion.button>
+    </motion.div>
   );
 }
 
@@ -107,7 +139,7 @@ function BankRow({ e }: { e: Extract<LedgerEntry, { kind: "deposit" | "withdraw"
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/5 text-[11px] opacity-60 grayscale">
         {ui.icon}
       </span>
-      <span className="text-slate-500">{shortAddr(e.player)}</span>
+      <AddrLink player={e.player} txHash={e.txHash} tone="text-slate-500" />
       <span className="font-medium tracking-wide text-slate-500">{ui.label}</span>
       <span className="ml-auto shrink-0 text-slate-600">#{e.txHash.slice(2, 6)}</span>
       <span className={`shrink-0 font-semibold ${ui.amount}`}>

@@ -28,7 +28,7 @@ A dark-themed, mobile-first Web3 crypto casino built around a single, honest ide
 
 ## 🛠️ Developer Experience & Tooling
 
-We built a centralized automation engine via `Makefile` to simplify development, testing, and Vercel deployments.
+We built a centralized automation engine via `Makefile` to simplify development, testing, and contract deployment.
 
 ```bash
 # 1. Install dependencies, compile contracts, and run 16 unit tests
@@ -43,11 +43,23 @@ make deploy-local
 # 4. Launch the Next.js development server
 make dev
 
-# 5. Build and deploy to Vercel production using secure .env.local variables
+# 5. (Fallback only) Build & deploy the frontend straight to Vercel from your machine
 make deploy
 ```
 
 > **Note:** The frontend includes a **Mock Wallet Mode** to allow testing the entire E2E loop (Connect → Deposit → Play → Withdraw) in the browser without MetaMask or testnet ETH.
+
+### 🚀 Push-to-Deploy (CI/CD)
+
+The frontend ships via a fully automated **GitHub → Vercel pipeline**. Every push to `main` triggers a production build and deploy — no manual step:
+
+```bash
+git push        # → Vercel auto-builds & promotes to production
+```
+
+- **Source of truth:** `github.com/erass-spec/veriflip` → Vercel project `frontend` (Root Directory: `frontend`).
+- **Secrets:** `NEXT_PUBLIC_SEPOLIA_ADDRESS` and `NEXT_PUBLIC_SEPOLIA_BURNER_KEY` live encrypted in Vercel's Production environment (gitignored locally in `frontend/.env.local`).
+- **`make deploy` is now just a local fallback** for deploying without a push (e.g. offline-of-GitHub hotfixes); day-to-day, `git push` is the deploy.
 
 ---
 

@@ -15,6 +15,7 @@ The differentiator isn't the game — it's that the casino *proves it isn't chea
 - **Contract** (`contracts/CoinFlip.sol`): Solidity 0.8.24, OpenZeppelin `Ownable` + `ReentrancyGuard`. Custodial player balances, owner-funded house bankroll, a liquidity guard that rejects any bet the bankroll can't cover, and a single `BetSettled` event carrying every input needed to recompute the result. `viaIR` enabled (the 10-field event overflows the legacy stack).
 - **Frontend** (`frontend/`): Next.js 15 (App Router), viem, framer-motion, TailwindCSS. A network-aware "Instant Play" burner lets anyone play with no wallet; MetaMask supported for self-custody. The verify panel recomputes keccak256 in-browser.
 - **Tooling:** Hardhat (compile/test/coverage/deploy), automated ABI + address export into the frontend on every deploy.
+- **CI/CD:** fully automated **GitHub → Vercel push-to-deploy**. Every push to `main` builds and promotes the frontend to production (Root Directory `frontend`, secrets stored encrypted in Vercel's Production env). The `make deploy` Makefile target remains as a local fallback.
 
 ## Why Ethereum
 The whole premise — *publicly verifiable randomness inputs and outcomes* — only works on a transparent, append-only ledger. `block.prevrandao`, the player's tx, the emitted event, and the contract's `computeResult()` view are all public. A user (or judge) can independently recompute any historical result without trusting us. That auditability is the product; a centralized backend couldn't offer it.

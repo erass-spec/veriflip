@@ -5,6 +5,7 @@ import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
 import { fmtEth6 } from "@/lib/format";
 import Navbar from "@/components/Navbar";
+import PageHeader from "@/components/PageHeader";
 import GamePanel from "@/components/GamePanel";
 import VerifyPanel from "@/components/VerifyPanel";
 import RecentGames from "@/components/RecentGames";
@@ -32,6 +33,11 @@ export default function PlayPage() {
           </button>
         </div>
       )}
+
+      <PageHeader
+        title="🎰 VeriFlip Gaming Console"
+        subtitle="A 50/50 on-chain coin flip. Choose heads or tails, set your wager, and verify outcomes instantly."
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-6">

@@ -3,6 +3,7 @@
 import { useWallet } from "@/lib/wallet";
 import { useGame } from "@/lib/useGame";
 import Navbar from "@/components/Navbar";
+import PageHeader from "@/components/PageHeader";
 import VaultPanel from "@/components/VaultPanel";
 import OnboardingConsole from "@/components/OnboardingConsole";
 import Footer from "@/components/Footer";
@@ -15,7 +16,12 @@ export default function VaultPage() {
     <main className="relative mx-auto max-w-6xl px-4">
       <Navbar />
 
-      <section className="relative flex min-h-[62vh] items-center justify-center overflow-hidden py-10">
+      <PageHeader
+        title="🏦 Your Secure Banking Vault"
+        subtitle="Manage your on-chain casino deposits, win balances, and secure wallet withdrawals directly through the smart contract."
+      />
+
+      <section className="relative flex min-h-[55vh] items-center justify-center overflow-hidden py-6">
         {/* High-security vault aurora — neon cyan + deep violet */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-80 w-80 -translate-x-[35%] -translate-y-[60%] rounded-full bg-violet-600/25 blur-3xl" />
