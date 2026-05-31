@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { WalletProvider } from "@/lib/wallet";
+import Toaster from "@/components/Toaster";
 
 export const metadata: Metadata = {
   title: "VeriFlip — Provably-Recomputable Coin Flip Casino",
@@ -13,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="bg-casino min-h-screen font-sans antialiased">
         <WalletProvider>{children}</WalletProvider>
+        <Toaster />
       </body>
     </html>
   );

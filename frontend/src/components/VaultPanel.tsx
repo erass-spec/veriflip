@@ -6,6 +6,7 @@ import { formatEther, parseEther } from "viem";
 import { useWallet } from "@/lib/wallet";
 import type { useGame } from "@/lib/useGame";
 import { fmtEth6, friendlyError } from "@/lib/format";
+import { toastSuccess } from "@/lib/toast";
 
 const PRESETS = ["0.002", "0.005", "0.01"];
 
@@ -66,7 +67,7 @@ function FlowArrows({ tab }: { tab: Tab }) {
 }
 
 export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> }) {
-  const { account } = useWallet();
+  const { account, network } = useWallet();
   const { state, deposit, withdraw, refreshState, busy } = api;
   const [tab, setTab] = useState<Tab>("deposit");
   const [amount, setAmount] = useState("0.005");
@@ -97,10 +98,17 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
   async function submit() {
     setError(null);
     if (!valid) return;
+    const sent = amount; // snapshot before we clear the field
     setPending(true);
     try {
-      if (tab === "deposit") await deposit(amount);
-      else await withdraw(amount);
+      const hash = tab === "deposit" ? await deposit(sent) : await withdraw(sent);
+      // Auto-clear so a stale value can't trigger a false "Exceeds available balance".
+      setAmount("");
+      const verb = tab === "deposit" ? "Deposited" : "Withdrew";
+      toastSuccess(
+        `${verb} ${sent} ETH!`,
+        network?.explorer && hash ? { href: `${network.explorer}/tx/${hash}`, linkLabel: "View on Etherscan" } : undefined
+      );
     } catch (e) {
       setError(friendlyError(e));
       refreshState();
@@ -166,11 +174,11 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
       </div>
       <div className="mb-3 flex items-center gap-2">
         <input
-          type="number"
-          step="0.001"
-          min="0"
+          type="text"
+          inputMode="decimal"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          // Normalize locale decimal commas to periods so parseEther never reverts.
+          onChange={(e) => setAmount(e.target.value.replace(/,/g, "."))}
           disabled={locked}
           placeholder="0.000000"
           className={`w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition placeholder:text-white/25 focus:shadow-[0_0_0_3px_rgba(255,255,255,0.06)] ${

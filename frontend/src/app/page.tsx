@@ -100,10 +100,11 @@ export default function Landing() {
             { n: 2, t: "Deposit", d: "Move ETH into your in-contract game balance." },
             { n: 3, t: "Flip", d: "Choose a side and stake. The result is decided in one tx." },
             { n: 4, t: "Withdraw", d: "Cash out your balance any time. You hold the keys." },
-          ].map((s, i) => (
-            <motion.div
+          ].map((s) => (
+            // Static (always 100% opaque): a scroll-gated opacity fade left the rightmost
+            // 4-col card stuck transparent, reading as "disabled/cut off".
+            <div
               key={s.n}
-              {...fade(i * 0.06)}
               className="card relative p-5 transition-all duration-500 hover:-translate-y-1 hover:scale-[1.02] hover:border-emerald-500/30 hover:shadow-glow"
             >
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[radial-gradient(circle_at_30%_30%,#5eead4,#0891b2)] font-extrabold text-ink-900 animate-badge-pulse">
@@ -111,7 +112,7 @@ export default function Landing() {
               </div>
               <div className="font-bold">{s.t}</div>
               <div className="mt-1 text-sm text-white/50">{s.d}</div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
@@ -163,15 +164,15 @@ export default function Landing() {
           { k: PAYOUT_MULTIPLIER, v: "winner payout" },
           { k: HOUSE_EDGE, v: "house edge" },
           { k: "100%", v: "on-chain" },
-        ].map((s, i) => (
-          <motion.div
+        ].map((s) => (
+          // Static (always 100% opaque) — same scroll-gated-fade fix as "How it works".
+          <div
             key={s.v}
-            {...fade(i * 0.05)}
             className="card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-neon-cyan/30 hover:shadow-glow-cyan"
           >
             <div className="text-2xl font-extrabold gradient-text">{s.k}</div>
             <div className="text-xs uppercase tracking-wide text-white/40">{s.v}</div>
-          </motion.div>
+          </div>
         ))}
       </section>
 

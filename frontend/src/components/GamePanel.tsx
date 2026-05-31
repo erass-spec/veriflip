@@ -10,6 +10,7 @@ import { fmtEth6, friendlyError } from "@/lib/format";
 import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
 import { sound } from "@/lib/sound";
 import { useSound } from "@/lib/useSound";
+import { fireConfetti } from "@/lib/confetti";
 import CoinAnimation from "./CoinAnimation";
 import OnboardingConsole from "./OnboardingConsole";
 
@@ -246,8 +247,12 @@ export default function GamePanel({
       setCoin("settled");
       onSettled(row);
       // micro-reward + session tracking (once per flip, here — not in a render effect)
-      if (row.won) sound.win();
-      else sound.loss();
+      if (row.won) {
+        sound.win();
+        fireConfetti(); // 🎉 emerald/gold victory burst
+      } else {
+        sound.loss();
+      }
       setHistory((h) => [...h, row.won].slice(-5));
       setStreak((s) => (row.won ? s + 1 : 0));
     } catch (e) {
@@ -422,11 +427,12 @@ export default function GamePanel({
         <StepLabel>2. Set your bet amount</StepLabel>
         <div className="mb-3 flex items-center gap-2">
           <input
-            type="number"
-            step="0.01"
-            min="0"
+            type="text"
+            inputMode="decimal"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            // Normalize locale decimal commas to periods so parseEther never reverts
+            // for European/Russian users (a type=number input would silently drop the comma).
+            onChange={(e) => setAmount(e.target.value.replace(/,/g, "."))}
             disabled={locked}
             className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-4 py-3 font-mono text-lg outline-none transition focus:border-emerald-400/60 focus:shadow-[0_0_0_3px_rgba(52,211,153,0.15)]"
           />

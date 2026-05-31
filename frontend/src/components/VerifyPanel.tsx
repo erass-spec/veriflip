@@ -28,12 +28,20 @@ function VarTip({ label }: { label: keyof typeof TIPS }) {
   return (
     <span className="group relative inline-flex items-center gap-1">
       <span className="text-emerald-400/80">{label}</span>
-      <span className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-emerald-400/40 text-[8px] font-bold text-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.55)]">
+      {/* Generous hit area: the (?) stays small but a -inset-2 pseudo-element extends the
+          hover/tap target ~8px in every direction; tabIndex makes it focusable so the tip
+          also opens on touch/keyboard via group-focus-within. */}
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label={`What is ${label}?`}
+        className="relative inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-emerald-400/40 text-[9px] font-bold text-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.55)] outline-none before:absolute before:-inset-2 before:content-[''] focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+      >
         ?
       </span>
       <span
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-0 z-40 mb-2 w-64 max-w-[80vw] translate-y-1 rounded-lg border border-emerald-400/30 bg-slate-950/95 p-2.5 font-sans text-[11px] font-normal leading-snug tracking-normal text-white/80 opacity-0 shadow-[0_0_26px_-6px_rgba(52,211,153,0.65)] backdrop-blur transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
+        className="pointer-events-none absolute bottom-full left-0 z-40 mb-2 w-64 max-w-[80vw] translate-y-1 rounded-lg border border-emerald-400/30 bg-slate-950/95 p-2.5 font-sans text-[11px] font-normal leading-snug tracking-normal text-white/80 opacity-0 shadow-[0_0_26px_-6px_rgba(52,211,153,0.65)] backdrop-blur transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
       >
         {lead && <b className="text-emerald-300">{lead}: </b>}
         {rest.trim()}
