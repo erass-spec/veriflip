@@ -80,7 +80,7 @@ export default function VerifyPanel({ game }: { game: GameRow }) {
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
           </span>
-          <span className="ml-1 font-mono text-xs text-white/40">verify.sh — provably fair</span>
+          <span className="ml-1 font-mono text-xs text-white/40">verify.sh — verifying flip #{game.gameId.toString()}</span>
         </div>
         <span
           className={`rounded-md px-2.5 py-1 font-mono text-xs font-bold ${
@@ -93,7 +93,16 @@ export default function VerifyPanel({ game }: { game: GameRow }) {
         </span>
       </div>
 
+      {/* Instructional hint linking the Recent Flips ledger to this panel */}
+      <div className="border-b border-white/5 bg-black/20 px-4 py-1.5 text-[10px] leading-relaxed text-white/35">
+        💡 Tip: Select any game in the <b className="font-semibold text-white/55">Recent Flips</b> ledger to inspect and recompute its variables.
+      </div>
+
       <div className="rounded-b-2xl bg-black/20 px-4 py-3 font-mono text-xs">
+        {/* Simulated shell command — shows which game's parameters are being analyzed */}
+        <div className="mb-2 text-emerald-300/90">
+          <span className="text-emerald-500/50">$</span> ./verify.sh --game=#{game.gameId.toString()}
+        </div>
         <div className="mb-2 text-white/35">
           <span className="text-white/25"># </span>
           recomputed in your browser from public on-chain data

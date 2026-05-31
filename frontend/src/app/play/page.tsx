@@ -49,7 +49,11 @@ export default function PlayPage() {
             <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">
               Recent Flips
             </div>
-            <RecentGames entries={api.entries} onSelect={(g) => setSelected(g)} />
+            <RecentGames
+              entries={api.entries}
+              onSelect={(g) => setSelected(g)}
+              selectedGameId={selected?.gameId ?? null}
+            />
           </div>
           {account && (
             <div className="card p-4">

@@ -90,9 +90,10 @@ function TerminalHeader() {
   );
 }
 
-function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }) {
+function BetRow({ g, onSelect, selected }: { g: GameRow; onSelect?: (g: GameRow) => void; selected?: boolean }) {
   // A div (not a button) so it can host a real <a> for the address. Clicking the row opens
   // the in-browser verify panel; clicking the address opens Etherscan (stopPropagation).
+  // The selected row gets a persistent emerald ring (ring = no layout shift) linking it to verify.sh.
   return (
     <motion.div
       {...ANIM}
@@ -106,8 +107,13 @@ function BetRow({ g, onSelect }: { g: GameRow; onSelect?: (g: GameRow) => void }
       }}
       role="button"
       tabIndex={0}
+      aria-current={selected ? "true" : undefined}
       title="Re-verify this flip"
-      className={`${ROW} cursor-pointer transition-colors hover:bg-white/[0.04]`}
+      className={`${ROW} cursor-pointer transition-all ${
+        selected
+          ? "bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.08)] ring-1 ring-inset ring-emerald-500/40"
+          : "hover:bg-white/[0.04]"
+      }`}
     >
       <span className={g.won ? "text-emerald-400" : "text-white/30"}>{">"}</span>
       <span
@@ -153,10 +159,12 @@ function BankRow({ e }: { e: Extract<LedgerEntry, { kind: "deposit" | "withdraw"
 export default function RecentGames({
   entries,
   onSelect,
+  selectedGameId,
   compact = false,
 }: {
   entries: LedgerEntry[];
   onSelect?: (g: GameRow) => void;
+  selectedGameId?: bigint | null;
   compact?: boolean;
 }) {
   return (
@@ -171,7 +179,12 @@ export default function RecentGames({
           <AnimatePresence initial={false}>
             {entries.map((e) =>
               e.kind === "bet" ? (
-                <BetRow key={e.key} g={e.bet} onSelect={onSelect} />
+                <BetRow
+                  key={e.key}
+                  g={e.bet}
+                  onSelect={onSelect}
+                  selected={selectedGameId != null && e.bet.gameId === selectedGameId}
+                />
               ) : (
                 <BankRow key={e.key} e={e} />
               )
