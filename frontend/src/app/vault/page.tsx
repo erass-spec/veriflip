@@ -3,7 +3,6 @@
 import { useWallet } from "@/lib/wallet";
 import { useGame } from "@/lib/useGame";
 import Navbar from "@/components/Navbar";
-import PageHeader from "@/components/PageHeader";
 import VaultPanel from "@/components/VaultPanel";
 import OnboardingConsole from "@/components/OnboardingConsole";
 import Footer from "@/components/Footer";
@@ -15,11 +14,6 @@ export default function VaultPage() {
   return (
     <main className="relative mx-auto max-w-6xl px-4">
       <Navbar />
-
-      <PageHeader
-        title="🏦 Your Secure Banking Vault"
-        subtitle="Manage on-chain deposits and secure withdrawals."
-      />
 
       <section className="relative flex min-h-[55vh] items-center justify-center overflow-hidden py-6">
         {/* High-security vault aurora — neon cyan + deep violet */}

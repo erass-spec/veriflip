@@ -32,7 +32,7 @@ export default function Navbar() {
   }, [pathname]);
 
   return (
-    <header className="sticky top-3 z-50 mb-6 rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-3 shadow-lg backdrop-blur-md sm:px-4">
+    <header className="sticky top-3 z-50 mb-4 rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-3 shadow-lg backdrop-blur-md sm:px-4 md:mb-6">
       <div className="flex items-center justify-between gap-2 sm:gap-3">
         {/* Static logo — always routes home, no per-route breadcrumb */}
         <Link href="/" aria-label="VeriFlip home" className="min-w-0">
