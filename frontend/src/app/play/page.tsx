@@ -45,7 +45,12 @@ export default function PlayPage() {
           {selected && <VerifyPanel game={selected} />}
         </div>
         <div className="space-y-6">
-          <RecentGames entries={api.entries} onSelect={(g) => setSelected(g)} />
+          <div>
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">
+              Recent Flips
+            </div>
+            <RecentGames entries={api.entries} onSelect={(g) => setSelected(g)} />
+          </div>
           {account && (
             <div className="card p-4">
               <div className="mb-3 flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-white/50">
