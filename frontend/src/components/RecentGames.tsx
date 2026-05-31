@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import type { GameRow } from "@/lib/useGame";
-import { fmtEth, shortAddr } from "@/lib/format";
+import { fmtEth6, shortAddr } from "@/lib/format";
 import { sideLabel } from "@/lib/fair";
 import { useConnectivity, type ConnStatus } from "@/lib/useConnectivity";
 
@@ -98,7 +98,7 @@ export default function RecentGames({
                 </span>
                 <span className="ml-auto shrink-0 text-white/30">#{g.gameId.toString()}</span>
                 <span className={`shrink-0 font-semibold ${g.won ? "text-emerald-400" : "text-white/40"}`}>
-                  {g.won ? `+${fmtEth(g.payout - g.betAmount)}` : `−${fmtEth(g.betAmount)}`}
+                  {g.won ? `+${fmtEth6(g.payout - g.betAmount)}` : `−${fmtEth6(g.betAmount)}`}
                 </span>
               </motion.button>
             ))}

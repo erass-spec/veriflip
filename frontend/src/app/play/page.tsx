@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
-import { fmtEth } from "@/lib/format";
+import { fmtEth6 } from "@/lib/format";
 import Navbar from "@/components/Navbar";
 import GamePanel from "@/components/GamePanel";
 import VerifyPanel from "@/components/VerifyPanel";
@@ -50,10 +50,10 @@ export default function PlayPage() {
                 <dt className="text-white/40">total_flips</dt>
                 <dd className="text-right text-emerald-300">{api.state.totalFlips.toString()}</dd>
                 <dt className="text-white/40">house_pool</dt>
-                <dd className="text-right text-white/80">{fmtEth(api.state.bankroll)} ETH</dd>
+                <dd className="text-right text-white/80">{fmtEth6(api.state.bankroll)} ETH</dd>
                 <dt className="text-white/40">bet_range</dt>
                 <dd className="text-right text-white/80">
-                  {fmtEth(api.state.minBet)}–{fmtEth(api.state.maxBet)}
+                  {fmtEth6(api.state.minBet)}–{fmtEth6(api.state.maxBet)}
                 </dd>
               </dl>
               <p className="mt-3 text-xs leading-relaxed text-white/40">

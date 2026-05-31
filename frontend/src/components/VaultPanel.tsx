@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { parseEther } from "viem";
 import { useWallet } from "@/lib/wallet";
 import type { useGame } from "@/lib/useGame";
-import { fmtEth, friendlyError } from "@/lib/format";
+import { fmtEth6, friendlyError } from "@/lib/format";
 
 const PRESETS = ["0.002", "0.005", "0.01"];
 
@@ -109,9 +109,9 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
 
       {/* Wallet → Vault flow diagram */}
       <div className="mb-4 flex items-center gap-1.5">
-        <FlowBox icon="🦊" label="Wallet" value={fmtEth(walletEth)} accent={isDeposit ? null : "violet"} />
+        <FlowBox icon="🦊" label="Wallet" value={fmtEth6(walletEth)} accent={isDeposit ? null : "violet"} />
         <FlowArrows tab={tab} />
-        <FlowBox icon="🏦" label="Game Vault" value={fmtEth(gameBal)} accent={isDeposit ? "cyan" : null} />
+        <FlowBox icon="🏦" label="Game Vault" value={fmtEth6(gameBal)} accent={isDeposit ? "cyan" : null} />
       </div>
 
       {/* Plain-English explainer */}
@@ -184,7 +184,7 @@ export default function VaultPanel({ api }: { api: ReturnType<typeof useGame> })
         })}
       </div>
       <div className="mb-3 mt-1 text-right text-[11px] text-white/30">
-        Available: {fmtEth(available)} ETH
+        Available: {fmtEth6(available)} ETH
         {exceeds && <span className="ml-2 font-semibold text-red-400">⚠ Exceeds available</span>}
       </div>
 

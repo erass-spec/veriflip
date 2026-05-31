@@ -6,7 +6,7 @@ import { formatEther, parseEther } from "viem";
 import { AnimatePresence, motion } from "framer-motion";
 import { useWallet } from "@/lib/wallet";
 import { useGame, type GameRow } from "@/lib/useGame";
-import { fmtEth, friendlyError } from "@/lib/format";
+import { fmtEth6, friendlyError } from "@/lib/format";
 import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
 import CoinAnimation from "./CoinAnimation";
 import OnboardingConsole from "./OnboardingConsole";
@@ -173,13 +173,13 @@ export default function GamePanel({
           <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
             <WalletIcon /> Balance
           </div>
-          <div className="mt-0.5 font-mono text-base font-bold text-emerald-400">{fmtEth(state.balance)}</div>
+          <div className="mt-0.5 font-mono text-base font-bold text-emerald-400">{fmtEth6(state.balance)}</div>
         </div>
         <div className="px-3 py-2.5">
           <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/40">
             <VaultIcon /> House
           </div>
-          <div className="mt-0.5 font-mono text-base font-bold text-white/80">{fmtEth(state.bankroll)}</div>
+          <div className="mt-0.5 font-mono text-base font-bold text-white/80">{fmtEth6(state.bankroll)}</div>
         </div>
         <div className="px-3 py-2.5">
           <div className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Edge · Payout</div>
@@ -203,7 +203,7 @@ export default function GamePanel({
                 won ? "bg-neon-green/15 text-neon-green shadow-glow" : "bg-white/5 text-white/60"
               }`}
             >
-              {won ? `🎉 YOU WON +${fmtEth(last.payout - last.betAmount)} ETH` : "😶 House wins this round"}
+              {won ? `🎉 YOU WON +${fmtEth6(last.payout - last.betAmount)} ETH` : "😶 House wins this round"}
             </motion.div>
           )}
           {coin === "spinning" && (
@@ -294,7 +294,7 @@ export default function GamePanel({
         </div>
         <div className="mt-2 flex items-center justify-between text-xs">
           <span className="text-white/30">
-            Limits: {fmtEth(state.minBet)} – {fmtEth(state.maxBet)} ETH
+            Limits: {fmtEth6(state.minBet)} – {fmtEth6(state.maxBet)} ETH
           </span>
           {insufficientBalance ? (
             <span className="font-semibold text-red-400">⚠ Insufficient balance</span>

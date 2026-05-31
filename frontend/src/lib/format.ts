@@ -11,6 +11,13 @@ export function fmtEth(wei: bigint, dp = 4) {
   return n.toLocaleString(undefined, { maximumFractionDigits: dp });
 }
 
+// Fixed 6-decimal ETH for win/loss amounts, where the 3.5% edge lives in the small
+// digits (e.g. a 0.0004 win nets +0.000372, not +0.0004). Fixed precision also keeps
+// the monospace feed columns aligned. Uses a dot decimal regardless of locale.
+export function fmtEth6(wei: bigint) {
+  return Number(formatEther(wei)).toFixed(6);
+}
+
 export function timeAgo(tsSec: number) {
   const d = Math.max(0, Math.floor(Date.now() / 1000) - tsSec);
   if (d < 60) return `${d}s ago`;
