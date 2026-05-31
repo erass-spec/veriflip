@@ -3,7 +3,6 @@ import Link from "next/link";
 import BrandLogo from "./BrandLogo";
 import { SEPOLIA_NETWORK } from "@/lib/contract";
 
-const ENGINE_VERSION = "v1.2.0-Production";
 // Public repo — security review + full source.
 const GITHUB_URL = "https://github.com/erass-spec/veriflip";
 
@@ -65,10 +64,6 @@ export default function Footer() {
               <li className="flex items-center gap-2 text-white/60">
                 <span aria-hidden>🔒</span>
                 Security: <span className="text-white/80">OpenZeppelin Secured</span>
-              </li>
-              <li className="flex items-center gap-2 text-white/60">
-                <span aria-hidden>⚙️</span>
-                Engine: <span className="font-mono text-emerald-400/90">{ENGINE_VERSION}</span>
               </li>
             </ul>
           </div>
