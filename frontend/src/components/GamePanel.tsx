@@ -11,11 +11,15 @@ import { PAYOUT_MULTIPLIER, HOUSE_EDGE, type Side } from "@/lib/contract";
 import { sound } from "@/lib/sound";
 import { useSound } from "@/lib/useSound";
 import { fireConfetti } from "@/lib/confetti";
+import { toastSuccess } from "@/lib/toast";
 import CoinAnimation from "./CoinAnimation";
 import OnboardingConsole from "./OnboardingConsole";
 
 // Below this native-ETH balance the burner can't reliably cover another tx's gas.
 const LOW_GAS_WEI = parseEther("0.0015");
+
+// One-click top-up size for the in-game balance, dispatched straight from the play screen.
+const QUICK_FUND = "0.005";
 
 // Trim float noise to a clean, parseable decimal string.
 const trim = (n: number) => parseFloat(n.toFixed(8)).toString();
@@ -148,13 +152,13 @@ export default function GamePanel({
   onSettled: (g: GameRow) => void;
 }) {
   const { account, network, mode } = useWallet();
-  const { state, flip, refreshState, busy } = api;
+  const { state, flip, deposit, refreshState, busy } = api;
   const [choice, setChoice] = useState<Side>(0);
   const [amount, setAmount] = useState("");
   const [coin, setCoin] = useState<"idle" | "spinning" | "settled">("idle");
   const [last, setLast] = useState<GameRow | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<null | "flip">(null);
+  const [pending, setPending] = useState<null | "flip" | "fund">(null);
 
   // Gamification state
   const { muted, toggle: toggleMute } = useSound();
@@ -212,6 +216,11 @@ export default function GamePanel({
   // `busy` covers any in-flight tx from the hook (incl. a vault deposit/withdraw), so the
   // flip can't fire while the Vault has a pending transaction (avoids burner nonce clashes).
   const canFlip = !pending && !busy && !invalidAmount && !insufficientBalance && !belowMin && !aboveMax && !lowGas;
+  // Instead of dead-ending on "Insufficient balance", a valid in-range bet that just exceeds
+  // the in-game balance turns the action button into a 1-click Quick Funding CTA. (lowGas still
+  // wins for the burner — a deposit also needs gas, so funding can't help a truly dry wallet.)
+  const needsFunding =
+    !pending && !busy && !invalidAmount && insufficientBalance && !belowMin && !aboveMax && !lowGas;
   const locked = !!pending || busy; // any in-flight tx locks the whole card's controls
 
   // "Max" = the largest in-range bet you can afford: min(balance, maxBet).
@@ -260,6 +269,34 @@ export default function GamePanel({
       setCoin("idle");
       setError(friendlyError(e));
       // Re-sync on failure so a stale balance/nonce can't cause a repeat-revert loop.
+      refreshState();
+    } finally {
+      setPending(null);
+    }
+  }
+
+  // 1-click top-up straight from the play screen — no detour to /vault. Burner deposits
+  // silently; MetaMask pops its own confirm. Either way the balance refreshes and the
+  // button flips back to "Flip" automatically.
+  async function onQuickFund() {
+    setError(null);
+    if (!needsFunding) return;
+    setPending("fund");
+    sound.click();
+    try {
+      const hash = await deposit(QUICK_FUND);
+      sound.win(); // celebratory ping for the successful top-up
+      toastSuccess(
+        mode === "mock"
+          ? `⚡ Demo deposit of ${QUICK_FUND} ETH added to your balance!`
+          : `Deposited ${QUICK_FUND} ETH to your game balance!`,
+        network?.explorer && hash
+          ? { href: `${network.explorer}/tx/${hash}`, linkLabel: "View on Etherscan" }
+          : undefined
+      );
+    } catch (e) {
+      console.error("[wibe] quick-fund failed —", (e as any)?.shortMessage || (e as any)?.details || (e as any)?.message, e);
+      setError(friendlyError(e));
       refreshState();
     } finally {
       setPending(null);
@@ -519,18 +556,30 @@ export default function GamePanel({
       </AnimatePresence>
 
       <button
-        onClick={onFlip}
-        disabled={!canFlip}
-        className={`btn-primary w-full text-lg ${pending === "flip" ? "animate-breathe" : ""}`}
+        onClick={needsFunding ? onQuickFund : onFlip}
+        disabled={!canFlip && !needsFunding}
+        className={
+          needsFunding
+            ? `flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-lg font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
+                mode === "mock"
+                  ? "animate-breathe border-2 border-emerald-400/70 bg-emerald-400/10 text-emerald-200 shadow-[0_0_24px_-4px_rgba(52,211,153,0.9)] hover:bg-emerald-400/20"
+                  : "animate-breathe-cyan border-2 border-cyan-400/70 bg-cyan-400/10 text-cyan-200 shadow-[0_0_24px_-4px_rgba(34,211,238,0.9)] hover:bg-cyan-400/20"
+              }`
+            : `btn-primary w-full text-lg ${pending === "flip" ? "animate-breathe" : ""}`
+        }
       >
         {pending === "flip" ? (
           <span className="inline-flex items-center gap-2">
             <Spinner /> Mining on {chainName}…
           </span>
+        ) : pending === "fund" ? (
+          <span className="inline-flex items-center gap-2">
+            <Spinner /> {mode === "mock" ? "Adding demo funds…" : "Confirm deposit in your wallet…"}
+          </span>
         ) : lowGas ? (
           "Demo wallet out of gas"
-        ) : insufficientBalance ? (
-          "Insufficient balance"
+        ) : needsFunding ? (
+          mode === "mock" ? "⚡ Get Free Demo Deposit (1-Click)" : `🏦 Quick Deposit ${QUICK_FUND} ETH`
         ) : aboveMax ? (
           "Bet above max"
         ) : belowMin ? (
@@ -540,12 +589,12 @@ export default function GamePanel({
         )}
       </button>
 
-      {(insufficientBalance || state.balance === 0n) && (
+      {needsFunding && (
         <Link
           href="/vault"
-          className="mt-3 block text-center text-xs text-cyan-400 transition hover:text-cyan-300 hover:underline"
+          className="mt-3 block text-center text-xs text-white/40 transition hover:text-cyan-300 hover:underline"
         >
-          Need test ETH? Open your Vault to deposit →
+          Prefer a custom amount? Open your Vault →
         </Link>
       )}
 
