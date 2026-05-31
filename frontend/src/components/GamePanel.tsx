@@ -403,29 +403,46 @@ export default function GamePanel({
         </AnimatePresence>
       </div>
 
-      {/* Session tracker: last 5 results + win streak */}
-      {history.length > 0 && (
-        <div className="mb-5 flex items-center justify-center gap-3">
-          <div className="flex items-center gap-1.5" title="Your last 5 flips this session">
-            {history.map((w, i) => (
-              <span
-                key={i}
+      {/* Session tracker — ALWAYS rendered at a fixed height so it never collapses/shifts.
+          5 fixed slots: hollow placeholders until filled, then fade-in W/L dots. The streak
+          badge is absolutely positioned in a reserved slot so it never nudges the dots. */}
+      <div className="relative mb-5 flex h-8 items-center justify-center" title="Your last 5 flips this session">
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: 5 }).map((_, i) => {
+            const played = i < history.length;
+            if (!played) {
+              return <span key={`slot-${i}`} className="h-2.5 w-2.5 rounded-full border border-white/10 bg-transparent" />;
+            }
+            const w = history[i];
+            return (
+              <motion.span
+                key={`dot-${i}`}
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
                 className={`h-2.5 w-2.5 rounded-full transition-colors ${
                   w ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-slate-600"
                 }`}
               />
-            ))}
-          </div>
+            );
+          })}
+        </div>
+        <AnimatePresence>
           {streak >= 2 && (
-            <span
-              className="rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-1 font-mono text-xs font-bold text-orange-300"
+            <motion.span
+              key="streak"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="absolute left-1/2 top-1/2 ml-[49px] -translate-y-1/2 whitespace-nowrap rounded-full border border-orange-400/40 bg-orange-500/10 px-2.5 py-1 font-mono text-xs font-bold text-orange-300"
               style={{ boxShadow: `0 0 ${6 + streak * 3}px rgba(251,146,60,${Math.min(0.35 + streak * 0.1, 0.85)})` }}
             >
               🔥 {streak} Win{streak > 1 ? "s" : ""}
-            </span>
+            </motion.span>
           )}
-        </div>
-      )}
+        </AnimatePresence>
+      </div>
 
       {/* Choice */}
       <StepLabel>1. Choose your side</StepLabel>
