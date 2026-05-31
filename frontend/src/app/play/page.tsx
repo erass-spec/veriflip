@@ -42,7 +42,14 @@ export default function PlayPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-6">
           <GamePanel api={api} onSettled={(g) => setSelected(g)} />
-          {selected && <VerifyPanel game={selected} />}
+          {selected && (
+            <div>
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-white/40">
+                Provably Fair Verifier
+              </div>
+              <VerifyPanel game={selected} />
+            </div>
+          )}
         </div>
         <div className="space-y-6">
           <div>
