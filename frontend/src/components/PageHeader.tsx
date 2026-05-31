@@ -1,12 +1,15 @@
-// Centered, gradient page header for the inner routes — gives each page a welcoming title
-// and one line of context above the main cards.
+// Centered, gradient page header for the inner routes. Compact single line on desktop
+// (title • subtitle); stacks cleanly on mobile to avoid horizontal overflow.
 export default function PageHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="text-center">
-      <h1 className="mb-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl">
+    <div className="mb-6 flex flex-col items-center space-y-1 text-center md:flex-row md:items-center md:justify-center md:space-x-3 md:space-y-0">
+      <h1 className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-lg font-bold tracking-tight text-transparent md:text-xl">
         {title}
       </h1>
-      <p className="mx-auto mb-6 max-w-sm text-center text-xs text-slate-400">{subtitle}</p>
+      <span aria-hidden className="hidden text-slate-600 md:inline">
+        •
+      </span>
+      <p className="max-w-sm text-xs text-slate-400 md:max-w-none">{subtitle}</p>
     </div>
   );
 }

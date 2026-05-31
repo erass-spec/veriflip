@@ -18,7 +18,7 @@ export default function VaultPage() {
 
       <PageHeader
         title="🏦 Your Secure Banking Vault"
-        subtitle="Manage your on-chain casino deposits, win balances, and secure wallet withdrawals directly through the smart contract."
+        subtitle="Manage on-chain deposits and secure withdrawals."
       />
 
       <section className="relative flex min-h-[55vh] items-center justify-center overflow-hidden py-6">

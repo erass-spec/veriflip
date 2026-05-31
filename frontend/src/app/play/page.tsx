@@ -36,7 +36,7 @@ export default function PlayPage() {
 
       <PageHeader
         title="🎰 VeriFlip Gaming Console"
-        subtitle="A 50/50 on-chain coin flip. Choose heads or tails, set your wager, and verify outcomes instantly."
+        subtitle="Choose side, set wager, and verify outcomes instantly."
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_22rem]">
